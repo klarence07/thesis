@@ -773,25 +773,62 @@ class NameSelectionWindow:
             command=lambda: self.start_game("girl")
         ).pack(side="right", padx=15)
 
+        tk.Label(
+            self.main_frame,
+            text="SELECT DIFFICULTY",
+            font=("Consolas", 12),
+            bg="#8B4513",
+            fg="#FFD700"
+        ).pack(pady=(20, 10))
+
+        self.difficulty_var = tk.StringVar(value="Medium")
+        difficulty_frame = tk.Frame(self.main_frame, bg="#8B4513")
+        difficulty_frame.pack()
+
+        for diff in ["Easy", "Medium", "Hard"]:
+            tk.Radiobutton(
+                difficulty_frame,
+                text=diff,
+                variable=self.difficulty_var,
+                value=diff,
+                bg="#8B4513",
+                fg="#33FF33",
+                selectcolor="#2B2B2B",
+                font=("Consolas", 10, "bold")
+            ).pack(side="left", padx=10)
+
     def start_game(self, gender):
         player_name = self.name_entry.get().strip()
         if not player_name:
             player_name = "Hero"
 
+        difficulty = self.difficulty_var.get()
+
         self.window.destroy()
         self.master.deiconify()
 
-        game = RPGGame(self.master, gender=gender, player_name=player_name)
+        game = RPGGame(self.master, gender=gender, player_name=player_name, difficulty=difficulty)
 
 
 class RPGGame:
-    def __init__(self, root, gender="boy", player_name="Hero"):
+    def __init__(self, root, gender="boy", player_name="Hero", difficulty="Medium"):
         self.root = root
         self.root.title("Memory Lane RPG")
         self.root.configure(bg="#1C1C1C")
 
         self.gender = gender
         self.player_name = player_name
+        self.difficulty = difficulty
+
+        # Victory conditions based on difficulty
+        if self.difficulty == "Easy":
+            self.victory_quota = 10
+        elif self.difficulty == "Medium":
+            self.victory_quota = 20
+        elif self.difficulty == "Hard":
+            self.victory_quota = 30
+        else:
+            self.victory_quota = 20 # Default
 
         # --- UI: Expandable Main Frame with Border ---
         self.frame = tk.Frame(
@@ -1345,8 +1382,11 @@ class RPGGame:
     def update_status(self):
         remaining = len(self.npcs) - len(self.completed_topics)
         topics_left = ", ".join(t for t in self.npcs.values() if t not in self.mastered_topics and t != "Typomancer")
+
+        questions_answered = len(self.asked_sub_questions)
+
         self.status_label.config(
-            text=f"Level: {self.level} | HP: {self.health} | Completed: {len(self.mastered_topics)} | Remaining: {len(self.topics) - len(self.mastered_topics)} | Topics Left: {topics_left}"
+            text=f"Level: {self.level} | HP: {self.health} | Questions: {questions_answered}/{self.victory_quota} | Topics Left: {topics_left}"
         )
         self.loot_label.config(text="Loot: " + (", ".join(self.inventory) if self.inventory else "None"))
         potion_count = sum(1 for item in self.inventory if "Potion" in item)
@@ -1419,8 +1459,8 @@ class RPGGame:
         pos = (new_x, new_y)
 
         if self.portal_pos and pos == self.portal_pos:
-            if len(self.mastered_topics) == len(self.topics): # Check if all topics are mastered
-                messagebox.showinfo("Victory!", "You've completed all levels!")
+            if len(self.asked_sub_questions) >= self.victory_quota: # Check if question quota met
+                messagebox.showinfo("Victory!", "You've answered enough questions to win the game!")
 
                 # --- FIX 1: Sound check ---
                 if AUDIO_ENABLED:
@@ -1628,7 +1668,7 @@ class RPGGame:
         return all(key in self.asked_sub_questions for key in all_keys)
 
     def _get_unasked_question_key(self, topic):
-        """Randomly selects an unasked question key for the given topic."""
+        """Randomly selects an unasked question key for the given topic, respecting difficulty."""
         topic_groups = self._get_topic_groups()
         all_keys = topic_groups.get(topic)
 
@@ -1639,8 +1679,12 @@ class RPGGame:
         # Filter out already asked questions
         unasked_keys = [key for key in all_keys if key not in self.asked_sub_questions]
 
-        # Return a randomly selected key, or None if all are asked
-        return random.choice(unasked_keys) if unasked_keys else None
+        # Apply difficulty filter using db_utils
+        if unasked_keys:
+            filtered_keys = db_utils.filter_keys_by_difficulty(unasked_keys, self.difficulty)
+            return random.choice(filtered_keys) if filtered_keys else None
+
+        return None
 
     def ask_question(self, topic):
         # 1. Get the key for the next unasked question for this topic.
@@ -1703,35 +1747,43 @@ class RPGGame:
             self.add_xp(random.randint(4, 10))
             self.draw_map()
 
-            # FIX: Check if the remaining NPC list is empty (all topics for the current level are completed) to trigger the portal.
-            if not self.npcs and not self.portal_pos:
-                # Check if all topics in the entire game are mastered
-                if len(self.mastered_topics) == len(self.topics):
-                    self.info_label.config(text="All topics mastered! Find the portal for final victory!")
+            # Check if victory condition is met to spawn portal
+            if len(self.asked_sub_questions) >= self.victory_quota and not self.portal_pos:
+                 self.info_label.config(text="You've learned enough! Find the portal for final victory!")
+                 self.spawn_portal()
 
-                # Spawn the portal in a random, empty location
-                pos = (random.randint(0, MAP_WIDTH - 1), random.randint(0, MAP_HEIGHT - 1))
-                while pos in self.npcs or pos in self.enemies or pos in self.tiles or pos in self.chests or pos == tuple(
-                        self.player_pos):
-                    pos = (random.randint(0, MAP_WIDTH - 1), random.randint(0, MAP_HEIGHT - 1))
-
-                self.portal_pos = pos
+            # Also spawn portal if all NPCs for this level are gone (progression)
+            elif not self.npcs and not self.portal_pos:
                 self.info_label.config(text="A portal has opened! Find it to proceed to the next level.")
-
-                # --- FIX 1: Sound check ---
-                if AUDIO_ENABLED:
-                    self.play_sound("level_up.wav")
-
-                self.draw_map()  # Redraw the map to show the portal
+                self.spawn_portal()
         else:
             messagebox.showwarning("Hint", f"Hint: {hint}")
+
+    def spawn_portal(self):
+        # Spawn the portal in a random, empty location
+        pos = (random.randint(0, MAP_WIDTH - 1), random.randint(0, MAP_HEIGHT - 1))
+        while pos in self.npcs or pos in self.enemies or pos in self.tiles or pos in self.chests or pos == tuple(
+                self.player_pos):
+            pos = (random.randint(0, MAP_WIDTH - 1), random.randint(0, MAP_HEIGHT - 1))
+
+        self.portal_pos = pos
+        # Only update text if it hasn't been set by the victory condition
+        # Actually, the calling logic sets the text. We might want to remove text setting from here or make it generic.
+        # But for now, let's just do the mechanics.
+
+        # --- FIX 1: Sound check ---
+        if AUDIO_ENABLED:
+            self.play_sound("level_up.wav")
+
+        self.draw_map()  # Redraw the map to show the portal
 
     def get_question_data(self, question_key):
         """Retrieves question data using a specific key, falling back to default if key is not found."""
         question_data = db_utils.fetch_question(question_key)
 
         if question_data:
-             question, answer, base_hint = question_data
+             # Unpack including difficulty (which is the 4th element now)
+             question, answer, base_hint, _ = question_data
         else:
              question, answer, base_hint = ("What programming language are we learning?", "python", "It starts with 'p'")
 

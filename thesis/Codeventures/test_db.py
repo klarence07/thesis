@@ -14,10 +14,11 @@ class TestDatabase(unittest.TestCase):
 
     def test_fetch_question(self):
         # Test fetching a known question
-        question, answer, hint = db_utils.fetch_question("Control Flow")
+        question, answer, hint, difficulty = db_utils.fetch_question("Control Flow")
         self.assertEqual(question, "What keyword starts a conditional block?")
         self.assertEqual(answer, "if")
         self.assertEqual(hint, "Starts with 'i'")
+        self.assertEqual(difficulty, "Easy")
 
     def test_fetch_question_not_found(self):
         # Test fetching a non-existent question
