@@ -550,6 +550,61 @@ class CraftingWindow:
             self.craft_btn.config(state="disabled")
 
 
+class LeaderboardWindow:
+    def __init__(self, root, difficulty, player_name, score, time_taken):
+        self.window = tk.Toplevel(root)
+        self.window.title("Victory & Leaderboard")
+        self.window.geometry("500x400")
+        self.window.configure(bg="#1C1C1C")
+
+        # Ensure closing this window closes the app
+        self.window.protocol("WM_DELETE_WINDOW", root.quit)
+
+        # --- UI: Tree Wrapper ---
+        self.main_frame = tk.Frame(
+            self.window,
+            bg="#8B4513",
+            padx=10, pady=10,
+            relief="ridge", borderwidth=4
+        )
+        self.main_frame.pack(fill="both", expand=True, padx=10, pady=10)
+
+        # Victory Message
+        tk.Label(self.main_frame, text="VICTORY!", font=("Consolas", 24, "bold"), bg="#8B4513", fg="#FFD700").pack(pady=(10, 5))
+        tk.Label(self.main_frame, text=f"Well done, {player_name}!", font=("Consolas", 14), bg="#8B4513", fg="#33FF33").pack()
+        tk.Label(self.main_frame, text=f"Score: {score} | Time: {time_taken:.2f}s", font=("Consolas", 12), bg="#8B4513", fg="#00FFFF").pack(pady=5)
+
+        tk.Label(self.main_frame, text=f"~ {difficulty} Leaderboard ~", font=("Consolas", 16, "bold", "underline"), bg="#8B4513", fg="#FFFFFF").pack(pady=(20, 10))
+
+        # Leaderboard Table Frame
+        table_frame = tk.Frame(self.main_frame, bg="#2B2B2B", padx=5, pady=5)
+        table_frame.pack(fill="both", expand=True, padx=20)
+
+        # Headers
+        headers = ["Rank", "Name", "Score", "Time"]
+        for i, h in enumerate(headers):
+            tk.Label(table_frame, text=h, font=("Consolas", 10, "bold"), bg="#2B2B2B", fg="#FFD700", width=10 if i > 0 else 5).grid(row=0, column=i, padx=5, pady=5)
+
+        # Fetch Data
+        top_scores = db_utils.get_leaderboard(difficulty)
+
+        # Display Data
+        for i, row in enumerate(top_scores):
+            r_name, r_score, r_time = row
+            rank = i + 1
+            color = "#FFFFFF"
+            if r_name == player_name and r_score == score and abs(r_time - time_taken) < 0.01:
+                color = "#33FF33" # Highlight current run
+
+            tk.Label(table_frame, text=str(rank), font=("Consolas", 10), bg="#2B2B2B", fg=color).grid(row=i+1, column=0, padx=5, pady=2)
+            tk.Label(table_frame, text=str(r_name), font=("Consolas", 10), bg="#2B2B2B", fg=color).grid(row=i+1, column=1, padx=5, pady=2)
+            tk.Label(table_frame, text=str(r_score), font=("Consolas", 10), bg="#2B2B2B", fg=color).grid(row=i+1, column=2, padx=5, pady=2)
+            tk.Label(table_frame, text=f"{r_time:.2f}s", font=("Consolas", 10), bg="#2B2B2B", fg=color).grid(row=i+1, column=3, padx=5, pady=2)
+
+        # Close Button
+        tk.Button(self.main_frame, text="Exit Game", command=root.quit, bg="#FF3366", fg="#1C1C1C", font=("Consolas", 12, "bold")).pack(pady=20)
+
+
 class InventoryWindow:
     def __init__(self, game):
         self.game = game
@@ -1460,13 +1515,24 @@ class RPGGame:
 
         if self.portal_pos and pos == self.portal_pos:
             if len(self.asked_sub_questions) >= self.victory_quota: # Check if question quota met
-                messagebox.showinfo("Victory!", "You've answered enough questions to win the game!")
 
                 # --- FIX 1: Sound check ---
                 if AUDIO_ENABLED:
                     self.play_sound("victory.wav")
 
-                self.root.quit()
+                # Calculate score and time
+                final_time = time.time() - self.start_time
+                final_score = self.xp # Using XP as score for now
+
+                # Save score
+                db_utils.save_high_score(self.player_name, final_score, final_time, self.difficulty)
+
+                # Show Leaderboard
+                LeaderboardWindow(self.root, self.difficulty, self.player_name, final_score, final_time)
+
+                # Hide the main game frame instead of quitting immediately,
+                # so the leaderboard is visible.
+                self.frame.pack_forget()
                 return
             else:
                 self.level += 1

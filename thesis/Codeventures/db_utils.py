@@ -26,6 +26,17 @@ def init_db():
         )
     ''')
 
+    # Create leaderboard table
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS leaderboard (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT,
+            score INTEGER,
+            time_taken REAL,
+            difficulty TEXT
+        )
+    ''')
+
     # Check if table is empty
     cursor.execute('SELECT count(*) FROM questions')
     if cursor.fetchone()[0] == 0:
@@ -296,3 +307,28 @@ def filter_keys_by_difficulty(keys_list, chosen_difficulty):
         return keys_list
 
     return filtered_keys
+
+def save_high_score(name, score, time_taken, difficulty):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute('''
+        INSERT INTO leaderboard (name, score, time_taken, difficulty)
+        VALUES (?, ?, ?, ?)
+    ''', (name, score, time_taken, difficulty))
+    conn.commit()
+    conn.close()
+
+def get_leaderboard(difficulty):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    # Sort primarily by score (descending) and secondarily by time_taken (ascending)
+    # Filter by the difficulty played
+    cursor.execute('''
+        SELECT name, score, time_taken FROM leaderboard
+        WHERE difficulty = ?
+        ORDER BY score DESC, time_taken ASC
+        LIMIT 10
+    ''', (difficulty,))
+    rows = cursor.fetchall()
+    conn.close()
+    return rows
