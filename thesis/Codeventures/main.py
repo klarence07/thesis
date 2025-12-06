@@ -773,25 +773,52 @@ class NameSelectionWindow:
             command=lambda: self.start_game("girl")
         ).pack(side="right", padx=15)
 
+        tk.Label(
+            self.main_frame,
+            text="SELECT DIFFICULTY",
+            font=("Consolas", 12),
+            bg="#8B4513",
+            fg="#FFD700"
+        ).pack(pady=(20, 10))
+
+        self.difficulty_var = tk.StringVar(value="Medium")
+        difficulty_frame = tk.Frame(self.main_frame, bg="#8B4513")
+        difficulty_frame.pack()
+
+        for diff in ["Easy", "Medium", "Hard"]:
+            tk.Radiobutton(
+                difficulty_frame,
+                text=diff,
+                variable=self.difficulty_var,
+                value=diff,
+                bg="#8B4513",
+                fg="#33FF33",
+                selectcolor="#2B2B2B",
+                font=("Consolas", 10, "bold")
+            ).pack(side="left", padx=10)
+
     def start_game(self, gender):
         player_name = self.name_entry.get().strip()
         if not player_name:
             player_name = "Hero"
 
+        difficulty = self.difficulty_var.get()
+
         self.window.destroy()
         self.master.deiconify()
 
-        game = RPGGame(self.master, gender=gender, player_name=player_name)
+        game = RPGGame(self.master, gender=gender, player_name=player_name, difficulty=difficulty)
 
 
 class RPGGame:
-    def __init__(self, root, gender="boy", player_name="Hero"):
+    def __init__(self, root, gender="boy", player_name="Hero", difficulty="Medium"):
         self.root = root
         self.root.title("Memory Lane RPG")
         self.root.configure(bg="#1C1C1C")
 
         self.gender = gender
         self.player_name = player_name
+        self.difficulty = difficulty
 
         # --- UI: Expandable Main Frame with Border ---
         self.frame = tk.Frame(
@@ -1628,7 +1655,7 @@ class RPGGame:
         return all(key in self.asked_sub_questions for key in all_keys)
 
     def _get_unasked_question_key(self, topic):
-        """Randomly selects an unasked question key for the given topic."""
+        """Randomly selects an unasked question key for the given topic, respecting difficulty."""
         topic_groups = self._get_topic_groups()
         all_keys = topic_groups.get(topic)
 
@@ -1639,8 +1666,12 @@ class RPGGame:
         # Filter out already asked questions
         unasked_keys = [key for key in all_keys if key not in self.asked_sub_questions]
 
-        # Return a randomly selected key, or None if all are asked
-        return random.choice(unasked_keys) if unasked_keys else None
+        # Apply difficulty filter using db_utils
+        if unasked_keys:
+            filtered_keys = db_utils.filter_keys_by_difficulty(unasked_keys, self.difficulty)
+            return random.choice(filtered_keys) if filtered_keys else None
+
+        return None
 
     def ask_question(self, topic):
         # 1. Get the key for the next unasked question for this topic.
@@ -1731,7 +1762,8 @@ class RPGGame:
         question_data = db_utils.fetch_question(question_key)
 
         if question_data:
-             question, answer, base_hint = question_data
+             # Unpack including difficulty (which is the 4th element now)
+             question, answer, base_hint, _ = question_data
         else:
              question, answer, base_hint = ("What programming language are we learning?", "python", "It starts with 'p'")
 
