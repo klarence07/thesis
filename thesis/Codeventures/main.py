@@ -820,6 +820,16 @@ class RPGGame:
         self.player_name = player_name
         self.difficulty = difficulty
 
+        # Victory conditions based on difficulty
+        if self.difficulty == "Easy":
+            self.victory_quota = 10
+        elif self.difficulty == "Medium":
+            self.victory_quota = 20
+        elif self.difficulty == "Hard":
+            self.victory_quota = 30
+        else:
+            self.victory_quota = 20 # Default
+
         # --- UI: Expandable Main Frame with Border ---
         self.frame = tk.Frame(
             root,
@@ -1372,8 +1382,11 @@ class RPGGame:
     def update_status(self):
         remaining = len(self.npcs) - len(self.completed_topics)
         topics_left = ", ".join(t for t in self.npcs.values() if t not in self.mastered_topics and t != "Typomancer")
+
+        questions_answered = len(self.asked_sub_questions)
+
         self.status_label.config(
-            text=f"Level: {self.level} | HP: {self.health} | Completed: {len(self.mastered_topics)} | Remaining: {len(self.topics) - len(self.mastered_topics)} | Topics Left: {topics_left}"
+            text=f"Level: {self.level} | HP: {self.health} | Questions: {questions_answered}/{self.victory_quota} | Topics Left: {topics_left}"
         )
         self.loot_label.config(text="Loot: " + (", ".join(self.inventory) if self.inventory else "None"))
         potion_count = sum(1 for item in self.inventory if "Potion" in item)
@@ -1446,8 +1459,8 @@ class RPGGame:
         pos = (new_x, new_y)
 
         if self.portal_pos and pos == self.portal_pos:
-            if len(self.mastered_topics) == len(self.topics): # Check if all topics are mastered
-                messagebox.showinfo("Victory!", "You've completed all levels!")
+            if len(self.asked_sub_questions) >= self.victory_quota: # Check if question quota met
+                messagebox.showinfo("Victory!", "You've answered enough questions to win the game!")
 
                 # --- FIX 1: Sound check ---
                 if AUDIO_ENABLED:
@@ -1734,28 +1747,35 @@ class RPGGame:
             self.add_xp(random.randint(4, 10))
             self.draw_map()
 
-            # FIX: Check if the remaining NPC list is empty (all topics for the current level are completed) to trigger the portal.
-            if not self.npcs and not self.portal_pos:
-                # Check if all topics in the entire game are mastered
-                if len(self.mastered_topics) == len(self.topics):
-                    self.info_label.config(text="All topics mastered! Find the portal for final victory!")
+            # Check if victory condition is met to spawn portal
+            if len(self.asked_sub_questions) >= self.victory_quota and not self.portal_pos:
+                 self.info_label.config(text="You've learned enough! Find the portal for final victory!")
+                 self.spawn_portal()
 
-                # Spawn the portal in a random, empty location
-                pos = (random.randint(0, MAP_WIDTH - 1), random.randint(0, MAP_HEIGHT - 1))
-                while pos in self.npcs or pos in self.enemies or pos in self.tiles or pos in self.chests or pos == tuple(
-                        self.player_pos):
-                    pos = (random.randint(0, MAP_WIDTH - 1), random.randint(0, MAP_HEIGHT - 1))
-
-                self.portal_pos = pos
+            # Also spawn portal if all NPCs for this level are gone (progression)
+            elif not self.npcs and not self.portal_pos:
                 self.info_label.config(text="A portal has opened! Find it to proceed to the next level.")
-
-                # --- FIX 1: Sound check ---
-                if AUDIO_ENABLED:
-                    self.play_sound("level_up.wav")
-
-                self.draw_map()  # Redraw the map to show the portal
+                self.spawn_portal()
         else:
             messagebox.showwarning("Hint", f"Hint: {hint}")
+
+    def spawn_portal(self):
+        # Spawn the portal in a random, empty location
+        pos = (random.randint(0, MAP_WIDTH - 1), random.randint(0, MAP_HEIGHT - 1))
+        while pos in self.npcs or pos in self.enemies or pos in self.tiles or pos in self.chests or pos == tuple(
+                self.player_pos):
+            pos = (random.randint(0, MAP_WIDTH - 1), random.randint(0, MAP_HEIGHT - 1))
+
+        self.portal_pos = pos
+        # Only update text if it hasn't been set by the victory condition
+        # Actually, the calling logic sets the text. We might want to remove text setting from here or make it generic.
+        # But for now, let's just do the mechanics.
+
+        # --- FIX 1: Sound check ---
+        if AUDIO_ENABLED:
+            self.play_sound("level_up.wav")
+
+        self.draw_map()  # Redraw the map to show the portal
 
     def get_question_data(self, question_key):
         """Retrieves question data using a specific key, falling back to default if key is not found."""
