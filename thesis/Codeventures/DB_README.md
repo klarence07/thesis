@@ -24,3 +24,4 @@ sqlite3 codeventures.db
     - `question` (TEXT): The question text.
     - `answer` (TEXT): The expected answer.
     - `hint` (TEXT): A hint for the player.
+    - `difficulty` (TEXT): The difficulty level ('Easy', 'Medium', 'Hard').
