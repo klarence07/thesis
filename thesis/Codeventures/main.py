@@ -5,6 +5,7 @@ import os
 from PIL import Image, ImageDraw, ImageFont, ImageTk
 import time
 import json
+import db_utils
 
 # Handle Audio (Prevent crash if not on Windows)
 try:
@@ -39,17 +40,17 @@ def create_placeholder_images(base_dir):
     # Player (Simulating Stride/Movement Frame - Red/Orange)
     player = Image.new("RGBA", (TILE_SIZE, TILE_SIZE), (0, 0, 0, 0)) # Transparent BG
     draw = ImageDraw.Draw(player)
-    
+
     # Body (Dark Red/Orange theme based on previous context)
     body_color = (200, 50, 0, 255)
     leg_color = (150, 30, 0, 255)
 
     draw.rectangle([5, 5, TILE_SIZE - 5, TILE_SIZE - 5], fill=body_color)
-    
+
     # Stride Simulation: One leg forward, one leg back
     draw.line([(TILE_SIZE // 2 - 5, TILE_SIZE - 10), (TILE_SIZE // 2 - 15, TILE_SIZE - 5)], fill=leg_color, width=3) # Forward Leg
     draw.line([(TILE_SIZE // 2 + 5, TILE_SIZE - 10), (TILE_SIZE // 2 + 10, TILE_SIZE - 15)], fill=leg_color, width=3) # Back Leg
-    
+
     # Letter 'P'
     bbox = draw.textbbox((0, 0), "P", font=font)
     w = bbox[2] - bbox[0]
@@ -61,13 +62,13 @@ def create_placeholder_images(base_dir):
     # NPC (Simulating Stride/Movement Frame - Blue)
     npc = Image.new("RGBA", (TILE_SIZE, TILE_SIZE), (0, 0, 0, 0))  # Transparent background
     draw = ImageDraw.Draw(npc)
-    
+
     # Body (Dark Blue theme)
     body_color_npc = (0, 0, 200, 255)
     leg_color_npc = (0, 0, 150, 255)
-    
+
     draw.ellipse([5, 5, TILE_SIZE - 5, TILE_SIZE - 5], fill=body_color_npc)
-    
+
     # Stride Simulation: One leg forward, one leg back
     draw.line([(TILE_SIZE // 2 - 5, TILE_SIZE - 10), (TILE_SIZE // 2 - 15, TILE_SIZE - 5)], fill=leg_color_npc, width=3) # Forward Leg
     draw.line([(TILE_SIZE // 2 + 5, TILE_SIZE - 10), (TILE_SIZE // 2 + 10, TILE_SIZE - 15)], fill=leg_color_npc, width=3) # Back Leg
@@ -346,12 +347,12 @@ class EncycodepediaWindow:
             "Sets": "An unordered collection of unique and immutable objects.",
             "Classes": "A blueprint for creating objects, providing a way to structure code and data."
         }
-        
+
         # --- UI: Tree Wrapper ---
         self.main_frame = tk.Frame(
-            self.window, 
-            bg="#8B4513", 
-            padx=10, pady=10, 
+            self.window,
+            bg="#8B4513",
+            padx=10, pady=10,
             relief="ridge", borderwidth=4
         )
         self.main_frame.pack(fill="both", expand=True, padx=10, pady=10)
@@ -407,14 +408,14 @@ class StatsSystem:
         self.game = game
         self.window = tk.Toplevel(game.root)
         self.window.title("Upgrade Stats")
-        self.window.geometry("350x240") 
+        self.window.geometry("350x240")
         self.window.configure(bg="#1C1C1C")
-        
+
         # --- UI: Tree Wrapper ---
         self.main_frame = tk.Frame(
-            self.window, 
-            bg="#8B4513", 
-            padx=10, pady=10, 
+            self.window,
+            bg="#8B4513",
+            padx=10, pady=10,
             relief="ridge", borderwidth=4
         )
         self.main_frame.pack(fill="both", expand=True, padx=10, pady=10)
@@ -477,12 +478,12 @@ class CraftingWindow:
         self.window.title("Crafting")
         self.window.geometry("400x200")
         self.window.configure(bg="#1C1C1C")
-        
+
         # --- UI: Tree Wrapper ---
         self.main_frame = tk.Frame(
-            self.window, 
-            bg="#8B4513", 
-            padx=10, pady=10, 
+            self.window,
+            bg="#8B4513",
+            padx=10, pady=10,
             relief="ridge", borderwidth=4
         )
         self.main_frame.pack(fill="both", expand=True, padx=10, pady=10)
@@ -554,15 +555,15 @@ class InventoryWindow:
         self.game = game
         self.window = tk.Toplevel(game.root)
         self.window.title("Inventory")
-        self.window.geometry("450x450") 
-        self.window.configure(bg="#1C1C1C") 
+        self.window.geometry("450x450")
+        self.window.configure(bg="#1C1C1C")
         self.window.resizable(False, False)
-        
+
         # --- UI: Tree Wrapper ---
         self.main_frame = tk.Frame(
-            self.window, 
-            bg="#8B4513", 
-            padx=10, pady=10, 
+            self.window,
+            bg="#8B4513",
+            padx=10, pady=10,
             relief="ridge", borderwidth=4
         )
         self.main_frame.pack(fill="both", expand=True, padx=10, pady=10)
@@ -621,9 +622,9 @@ class InventoryWindow:
 
                 if item_name:
                     item_text, item_color, _ = self.get_item_icon_config(item_name)
-                    slot_container = tk.Frame(self.grid_frame, bg="#2B2B2B", borderwidth=2, relief="solid") 
+                    slot_container = tk.Frame(self.grid_frame, bg="#2B2B2B", borderwidth=2, relief="solid")
                     slot_container.grid(row=r, column=c, padx=5, pady=5)
-                    
+
                     btn_text = f"{item_text}"
                     btn_font = ("Consolas", 10, "bold")
                     if count == 1 and item_name not in ["Silver Key", "Gold Key", "Slime Goo", "Potion"]:
@@ -669,16 +670,16 @@ class InventoryWindow:
                 self.game.health += heal_amount
                 if self.game.health > self.game.max_health:
                     self.game.health = self.game.max_health
-                
+
                 self.game.inventory.remove(item_name)
                 self.game.update_status()
                 messagebox.showinfo("Used", f"You used a {item_name} and recovered {heal_amount} HP!")
-                
+
                 self.item_counts[item_name] -= 1
                 if self.item_counts[item_name] == 0:
                     del self.item_counts[item_name]
                     self.unique_items = list(self.item_counts.keys())
-                
+
                 self.display_inventory_grid()
                 for widget in self.action_frame.winfo_children():
                     widget.destroy()
@@ -698,54 +699,54 @@ class NameSelectionWindow:
         self.window.geometry("380x300")
         self.window.configure(bg="#1C1C1C")
         self.window.resizable(False, False)
-        
+
         self.window.grab_set()
 
         # --- UI: Tree Wrapper ---
         self.main_frame = tk.Frame(
-            self.window, 
-            bg="#8B4513", 
-            padx=10, pady=10, 
+            self.window,
+            bg="#8B4513",
+            padx=10, pady=10,
             relief="ridge", borderwidth=4
         )
         self.main_frame.pack(fill="both", expand=True, padx=10, pady=10)
 
         tk.Label(
-            self.main_frame, 
-            text="State Your Name Adventurer", 
-            font=("Consolas", 14, "bold"), 
-            bg="#8B4513", 
+            self.main_frame,
+            text="State Your Name Adventurer",
+            font=("Consolas", 14, "bold"),
+            bg="#8B4513",
             fg="#33FF33"
         ).pack(pady=(10, 10))
 
         input_frame = tk.Frame(
-            self.main_frame, 
-            bg="#2B2B2B", 
-            padx=10, 
-            pady=10, 
-            relief="groove", 
+            self.main_frame,
+            bg="#2B2B2B",
+            padx=10,
+            pady=10,
+            relief="groove",
             borderwidth=2
         )
         input_frame.pack(pady=10, padx=20)
 
         self.name_entry = tk.Entry(
-            input_frame, 
-            font=("Consolas", 14), 
-            bg="#1C1C1C", 
-            fg="#00FFFF", 
+            input_frame,
+            font=("Consolas", 14),
+            bg="#1C1C1C",
+            fg="#00FFFF",
             insertbackground="#00FFFF",
-            width=25, 
-            bd=0, 
+            width=25,
+            bd=0,
             relief="flat"
         )
         self.name_entry.pack()
         self.name_entry.focus_set()
 
         tk.Label(
-            self.main_frame, 
-            text="SELECT AVATAR TYPE", 
-            font=("Consolas", 12), 
-            bg="#8B4513", 
+            self.main_frame,
+            text="SELECT AVATAR TYPE",
+            font=("Consolas", 12),
+            bg="#8B4513",
             fg="#FFD700"
         ).pack(pady=(20, 10))
 
@@ -753,21 +754,21 @@ class NameSelectionWindow:
         button_frame.pack()
 
         tk.Button(
-            button_frame, 
-            text="BOY (M)", 
-            width=10, 
-            bg="#33CCFF", 
-            fg="#1C1C1C", 
+            button_frame,
+            text="BOY (M)",
+            width=10,
+            bg="#33CCFF",
+            fg="#1C1C1C",
             font=("Consolas", 12, "bold"),
             command=lambda: self.start_game("boy")
         ).pack(side="left", padx=15)
 
         tk.Button(
-            button_frame, 
-            text="GIRL (F)", 
-            width=10, 
-            bg="#FF3366", 
-            fg="#1C1C1C", 
+            button_frame,
+            text="GIRL (F)",
+            width=10,
+            bg="#FF3366",
+            fg="#1C1C1C",
             font=("Consolas", 12, "bold"),
             command=lambda: self.start_game("girl")
         ).pack(side="right", padx=15)
@@ -776,10 +777,10 @@ class NameSelectionWindow:
         player_name = self.name_entry.get().strip()
         if not player_name:
             player_name = "Hero"
-        
+
         self.window.destroy()
         self.master.deiconify()
-        
+
         game = RPGGame(self.master, gender=gender, player_name=player_name)
 
 
@@ -791,14 +792,14 @@ class RPGGame:
 
         self.gender = gender
         self.player_name = player_name
-        
+
         # --- UI: Expandable Main Frame with Border ---
         self.frame = tk.Frame(
-            root, 
-            bg="#8B4513", 
-            padx=10, 
-            pady=10, 
-            relief="ridge", 
+            root,
+            bg="#8B4513",
+            padx=10,
+            pady=10,
+            relief="ridge",
             borderwidth=4
         )
         self.frame.pack(fill="both", expand=True, padx=10, pady=10)
@@ -870,11 +871,11 @@ class RPGGame:
         self.potion_label.pack(fill="x", pady=(10, 5), padx=10)
 
         # --- MINECRAFT-STYLE INVENTORY ON SIDE PANEL ---
-        
+
         # Inventory Button (Styled like Minecraft Stone/Wood Button)
         self.inventory_btn = tk.Button(
-            self.side_panel, 
-            text="INVENTORY", 
+            self.side_panel,
+            text="INVENTORY",
             command=self.show_inventory,
             bg="#727272", # Stone button gray
             fg="#FFFFFF", # White text
@@ -950,7 +951,7 @@ class RPGGame:
         }
         self.npcs = {}
         self.enemies = {}
-        self.chests = {} 
+        self.chests = {}
         self.completed_topics = set()
         self.mastered_topics = set()
         self.inventory = []
@@ -965,7 +966,7 @@ class RPGGame:
         self.current_enemy = None
         self.current_enemy_pos = None
         self.combat_system = CombatSystem(self)
-        
+
         self.minigame_words = []
         self.full_word_string = ""
         self.minigame_start_time = 0
@@ -977,9 +978,9 @@ class RPGGame:
         self.generate_chests()
         self.draw_map()
         self.bind_keys()
-        
+
         self.root.after(1000, self.update_timer)
-        
+
         if AUDIO_ENABLED:
             self.play_background_music()
 
@@ -1129,11 +1130,11 @@ class RPGGame:
             create_placeholder_images(base_dir)
 
         self.grass_img = load_resized_image(os.path.join(base_dir, "grass.png"))
-        
+
         # --- FILENAME FIX ---
         self.npc_img = load_resized_image(os.path.join(base_dir, "Npc.png")) # Was "npc.png"
         # --- END FIX ---
-        
+
         self.enemy_img = load_resized_image(os.path.join(base_dir, "enemy.png"))
         self.goblin_img = load_resized_image(os.path.join(base_dir, "goblin.png"))
         self.typo_img = load_resized_image(os.path.join(base_dir, "typomancer.png"))
@@ -1150,11 +1151,11 @@ class RPGGame:
             self.player_img = load_resized_image(os.path.join(base_dir, "player.png"))
 
         self.rock_img = load_resized_image(os.path.join(base_dir, "rock.png"))
-        
+
         # --- FILENAME FIX ---
         self.spikes_img = load_resized_image(os.path.join(base_dir, "Spikes.png")) # Was "spikes.png"
         # --- END FIX ---
-        
+
         self.fire_img = load_resized_image(os.path.join(base_dir, "fire.png"))
         self.tree_img = load_resized_image(os.path.join(base_dir, "tree.png"))
 
@@ -1165,15 +1166,15 @@ class RPGGame:
     def generate_npc_positions(self):
         self.npcs.clear()
         positions = set()
-        
+
         # Determine available topics (those not yet mastered)
         available_topics = [t for t in self.topics if t not in self.mastered_topics]
-        
+
         npc_count = self.get_npc_count_for_level()
-        
+
         # Cap the count at the number of available topics
         num_to_select = min(npc_count - 1, len(available_topics))
-        
+
         # If there are no topics left, skip NPC generation (portal should have been triggered)
         if num_to_select <= 0:
             self.completed_topics.clear()
@@ -1182,7 +1183,7 @@ class RPGGame:
 
         # Select unique topics from the available pool
         selected_topics = random.sample(available_topics, num_to_select)
-        
+
         # Place NPCs
         for topic in selected_topics:
             pos = (random.randint(0, MAP_WIDTH - 1), random.randint(0, MAP_HEIGHT - 1))
@@ -1351,10 +1352,10 @@ class RPGGame:
         potion_count = sum(1 for item in self.inventory if "Potion" in item)
         self.potion_label.config(text=f"Potions: {potion_count}")
         inventory_text = "\n".join(self.inventory) if self.inventory else "None"
-        
+
         # --- FIXED: Removed this line to prevent crash since the label was removed ---
         # self.loot_inventory_label.config(text=f"Inventory:\n{inventory_text}")
-        
+
         self.stats_lbl.config(
             text=f"Path of the Warrior: {self.stats['HP']}/5 | Path of the Coder: {self.stats['Wits']}/5")
         self.skill_points_lbl.config(text=f"Skill Points: {self.skill_points}")
@@ -1420,11 +1421,11 @@ class RPGGame:
         if self.portal_pos and pos == self.portal_pos:
             if len(self.mastered_topics) == len(self.topics): # Check if all topics are mastered
                 messagebox.showinfo("Victory!", "You've completed all levels!")
-                
+
                 # --- FIX 1: Sound check ---
                 if AUDIO_ENABLED:
                     self.play_sound("victory.wav")
-                    
+
                 self.root.quit()
                 return
             else:
@@ -1543,11 +1544,11 @@ class RPGGame:
     def take_damage(self, amount, source=None):
         self.health -= amount
         self.update_status()
-        
+
         # --- FIX 1: Sound check ---
         if AUDIO_ENABLED:
             self.play_sound("damage.wav")
-            
+
         if source:
             if source == "spikes":
                 self.unlocked_encyclopedia_entries.add("Spikes")
@@ -1564,11 +1565,11 @@ class RPGGame:
             elif source == "goblin-caught":
                 # Special condition for goblin catching the player
                 messagebox.showinfo("Game Over", "The goblin caught you! Game Over.")
-                
+
                 # --- FIX 1: Sound check ---
                 if AUDIO_ENABLED:
                     self.play_sound("game_over.wav")
-                    
+
                 if messagebox.askyesno("New Game?", "Would you like to start a new game?"):
                     self.reset_game()
                 else:
@@ -1580,11 +1581,11 @@ class RPGGame:
 
         if self.health <= 0:
             messagebox.showinfo("Game Over", "You died! Game Over.")
-            
+
             # --- FIX 1: Sound check ---
             if AUDIO_ENABLED:
                 self.play_sound("game_over.wav")
-                
+
             if messagebox.askyesno("New Game?", "Would you like to start a new game?"):
                 self.reset_game()
             else:
@@ -1622,7 +1623,7 @@ class RPGGame:
         # Get the full list of question keys for this topic
         topic_groups = self._get_topic_groups()
         all_keys = topic_groups.get(topic, [topic]) # Defaults to just the topic key if no group is found
-        
+
         # Check if all keys for this topic are in the asked set
         return all(key in self.asked_sub_questions for key in all_keys)
 
@@ -1644,7 +1645,7 @@ class RPGGame:
     def ask_question(self, topic):
         # 1. Get the key for the next unasked question for this topic.
         question_key = self._get_unasked_question_key(topic)
-        
+
         if question_key is None:
             messagebox.showinfo("Already Completed", f"You've completed all available questions for: {topic}")
             self.game_state = "exploration"
@@ -1652,11 +1653,11 @@ class RPGGame:
 
         self.game_state = "question"  # Set game state to 'question'
         self.unlocked_encyclopedia_entries.add(topic)
-        
+
         # 2. Retrieve the question data using the randomized key.
         question_data = self.get_question_data(question_key)
         question, answer, hint = question_data
-        
+
         response = simpledialog.askstring("Question",
                                           f"Hello, {self.player_name}! We're exploring {topic} today.\n\n{question}")
 
@@ -1669,23 +1670,23 @@ class RPGGame:
 
             # Check for topic completion
             is_complete = self.check_topic_complete(topic)
-            
+
             if is_complete:
                 messagebox.showinfo("Correct!", f"Correct! You've completed ALL questions for: {topic}")
                 self.completed_topics.add(topic)
                 self.mastered_topics.add(topic) # Mark topic as globally mastered
-                
+
                 # --- LOGIC: Remove NPC from map ---
                 pos_to_remove = None
                 for pos, npc_topic in list(self.npcs.items()):
                     if npc_topic == topic:
                         pos_to_remove = pos
                         break
-                
+
                 if pos_to_remove:
                     del self.npcs[pos_to_remove]
                 # --- END LOGIC ---
-                
+
             else:
                  messagebox.showinfo("Correct!", f"Correct! You've completed one question for: {topic}")
 
@@ -1694,11 +1695,11 @@ class RPGGame:
             self.inventory.append(loot_item)
             messagebox.showinfo("Loot", f"You received: {loot_item}!")
             self.unlocked_encyclopedia_entries.add(loot_item)
-            
+
             # --- FIX 1: Sound check ---
             if AUDIO_ENABLED:
                 self.play_sound("correct.wav")
-                
+
             self.add_xp(random.randint(4, 10))
             self.draw_map()
 
@@ -1707,7 +1708,7 @@ class RPGGame:
                 # Check if all topics in the entire game are mastered
                 if len(self.mastered_topics) == len(self.topics):
                     self.info_label.config(text="All topics mastered! Find the portal for final victory!")
-                
+
                 # Spawn the portal in a random, empty location
                 pos = (random.randint(0, MAP_WIDTH - 1), random.randint(0, MAP_HEIGHT - 1))
                 while pos in self.npcs or pos in self.enemies or pos in self.tiles or pos in self.chests or pos == tuple(
@@ -1716,21 +1717,24 @@ class RPGGame:
 
                 self.portal_pos = pos
                 self.info_label.config(text="A portal has opened! Find it to proceed to the next level.")
-                
+
                 # --- FIX 1: Sound check ---
                 if AUDIO_ENABLED:
                     self.play_sound("level_up.wav")
-                    
+
                 self.draw_map()  # Redraw the map to show the portal
         else:
             messagebox.showwarning("Hint", f"Hint: {hint}")
 
     def get_question_data(self, question_key):
         """Retrieves question data using a specific key, falling back to default if key is not found."""
-        questions = self._get_full_question_set()
-        
-        question, answer, base_hint = questions.get(question_key, ("What programming language are we learning?", "python", "It starts with 'p'"))
-        
+        question_data = db_utils.fetch_question(question_key)
+
+        if question_data:
+             question, answer, base_hint = question_data
+        else:
+             question, answer, base_hint = ("What programming language are we learning?", "python", "It starts with 'p'")
+
         wits_level = self.stats["Wits"]
         if wits_level > 0:
             clue_letters = answer[:wits_level]
@@ -1772,198 +1776,6 @@ class RPGGame:
             "Polymorphism": ["Polymorphism"],
             "Abstraction": ["Abstraction"],
             "Encapsulation": ["Encapsulation"],
-        }
-
-    def _get_full_question_set(self):
-        """Returns the dictionary containing all questions, answers, and hints."""
-        return {
-            
-            
-          # --- Fundamentals: Control Flow (6 Questions) ---
-            "Control Flow": ("What keyword starts a conditional block?", "if", "Starts with 'i'"),
-            "elif": ("What keyword is used for an alternative condition?", "elif", "A shortened version of 'else if'."),
-            "else_cf": ("What keyword executes when no conditions are met?", "else", "A four-letter word."),
-            "break": ("What keyword exits a loop prematurely?", "break", "A word that means to stop."),
-            "continue": ("What statement skips the rest of the current loop iteration?", "continue", "A word that means to move on."),
-            "return_cf": ("What keyword exits a function and passes control back to the caller?", "return", "Starts with 'r'"),
-
-            # --- Fundamentals: Loops (6 Questions) ---
-            "Loops": ("What keyword starts a loop over items?", "for", "Starts with 'f'"),
-            "while": ("What keyword creates a loop that runs until a condition is false?", "while", "A five-letter word for duration."),
-            "range": ("Which function generates a sequence of numbers for a loop?", "range", "A five-letter function."),
-            "membership": ("What does the 'in' keyword check for in a loop header?", "membership", "A ten-letter concept."),
-            "else_loop": ("What can be optionally attached to a loop to execute only if the loop finishes normally (without break)?", "else", "Same as the conditional fallback."),
-            "indexed_loop": ("What type of iteration is it when a loop iterates through a list index-by-index?", "indexed", "An eight-letter word."),
-
-            # --- Fundamentals: Functions (6 Questions) ---
-            "Functions": ("How do you define a function in Python?", "def", "Starts with 'd'"),
-            "local": ("What is a variable declared inside a function known as?", "local", "A five-letter word."),
-            "global": ("What keyword is used to access a variable outside the current scope?", "global", "Starts with 'g'"),
-            "arguments": ("What is the term for the values passed to a function call?", "arguments", "A nine-letter plural noun."),
-            "parameters": ("What is the term for the names defined in the function signature?", "parameters", "Starts with 'p'"),
-            "none": ("What value does a function return if no explicit return statement is used?", "none", "A type in Python."),
-
-            # --- Fundamentals: Lists (6 Questions) ---
-            "Lists": ("Which method adds an item to a list?", "append", "Starts with 'a'"),
-            "pop": ("Which method removes an item at a specific index?", "pop", "A three-letter method."),
-            "sort": ("Which method is used to sort the list in place?", "sort", "A four-letter word."),
-            "len": ("What function returns the number of items in a list?", "len", "A three-letter function."),
-            "zero": ("What is the starting index for all Python lists?", "zero", "A four-letter number."),
-            "square_list": ("What type of brackets are used to define a list?", "square", "A six-letter shape."),
-
-            # --- Fundamentals: Dictionaries (6 Questions) ---
-            "Dictionaries": ("What symbol separates keys and values?", ":", "It's a colon"),
-            "keys": ("What method returns a list of all keys in a dictionary?", "keys", "A four-letter plural noun."),
-            "get": ("What method safely retrieves a value using a default if the key is missing?", "get", "A three-letter method."),
-            "immutable": ("What must all keys in a dictionary be?", "immutable", "Starts with 'i'"),
-            "hash": ("What is a dictionary that uses a number as its key indexed by?", "hash", "A four-letter concept."),
-            "curly": ("What type of brackets are used to define a dictionary?", "curly", "A five-letter word."),
-
-            # --- Fundamentals: Sets (6 Questions) ---
-            "Sets": ("Which Python type is unordered and unique?", "set", "Starts with 's'"),
-            "intersection": ("Which set operation finds all elements in both sets?", "intersection", "A twelve-letter word."),
-            "union": ("Which set operation finds all elements in either set?", "union", "A five-letter operation."),
-            "remove": ("What method is used to remove an element, raising an error if it's not present?", "remove", "A six-letter method."),
-            "discard": ("What method removes an element without raising an error if it's not present?", "discard", "An eight-letter method."),
-            "issubset": ("What keyword checks for a subset relationship?", "issubset", "A ten-letter method."),
-
-            # --- Fundamentals: Classes (6 Questions) ---
-            "Classes": ("What keyword defines a class?", "class", "Starts with 'c'"),
-            "self": ("What is the standard name for the first parameter of an instance method?", "self", "A four-letter keyword."),
-            "blueprint": ("What is the blueprint for creating objects called?", "class", "Same as the definition keyword."),
-            "method": ("What is a function defined inside a class called?", "method", "A six-letter noun."),
-            "static": ("What is a variable associated with the class itself, not the instance?", "static", "A six-letter adjective."),
-            "instance": ("What is a variable associated with a specific instance of the class called?", "instance", "An eight-letter word."),
-
-            # --- Algorithms: Bubble Sort (6 Questions) ---
-            "Bubble Sort": ("What sorting algorithm repeatedly swaps adjacent elements if they are in the wrong order?", "bubble sort", "Starts with 'b'"),
-            "o(n^2)": ("What is the worst-case time complexity of this algorithm (using Big O notation)?", "o(n^2)", "Contains an exponent."),
-            "inefficiency": ("What is the main drawback of using this sorting method?", "inefficiency", "A thirteen-letter word."),
-            "sorted_pass": ("What state is achieved after the first pass of the algorithm?", "sorted", "The largest element is now in the correct position."),
-            "o(n)": ("What is the best-case time complexity for a list that is already sorted?", "o(n)", "Linear time."),
-            "flag": ("What technique can be added to detect if the list is already sorted and stop early?", "flag", "A four-letter status variable."),
-
-            # --- Algorithms: Binary Search (6 Questions) ---
-            "Binary Search": ("What search algorithm works only on sorted arrays by repeatedly dividing the search interval in half?", "binary search", "Starts with 'b'"),
-            "o(log n)": ("What is the time complexity of this algorithm?", "o(log n)", "The fastest Big O for searching."),
-            "middle": ("What is the first index checked during the algorithm's iteration?", "middle", "A six-letter word."),
-            "required_sorted": ("What is the required condition for the input array?", "sorted", "A six-letter adjective."),
-            "array": ("What type of data structure is typically searched using this method?", "array", "A five-letter data type."),
-            "low high": ("What two values define the search range during an iteration?", "low high", "Two three-letter words."),
-
-            # --- Algorithms: Factorial (6 Questions) ---
-            "Factorial": ("What algorithm calculates the product of all integers from 1 up to a given integer?", "factorial", "Starts with 'f'"),
-            "24": ("What is the factorial of the number 4?", "24", "A two-digit number."),
-            "recursive_fact": ("What type of function is often used to implement this calculation (when it calls itself)?", "recursive", "A nine-letter adjective."),
-            "1": ("What is the base case for the calculation (the factorial of 0)?", "1", "A single digit number."),
-            "multiplication": ("What mathematical operation is central to calculating the next step?", "multiplication", "A fourteen-letter word."),
-            "product": ("What is the term for calculating the product of a sequence of integers?", "product", "A seven-letter word."),
-
-            # --- Algorithms: Fibonacci (6 Questions) ---
-            "Fibonacci": ("What is the sequence where each number is the sum of the two preceding ones?", "fibonacci", "Starts with 'f'"),
-            "13": ("What is the 7th number in the sequence (starting 0, 1, 1, 2, 3, 5, 8...)?", "13", "A two-digit number."),
-            "o(2^n)": ("What is the time complexity of the naive recursive implementation?", "o(2^n)", "Exponential complexity."),
-            "memoization": ("What technique can improve the performance of the recursive version?", "memoization", "A twelve-letter word."),
-            "base cases": ("What is the name of the two starting numbers in the sequence (0 and 1)?", "base cases", "Two four-letter words."),
-            "binst formula": ("What is the formula that relates the sequence to the golden ratio?", "binst formula", "A twelve-letter proper noun."),
-
-            # --- Algorithms: Palindrome (6 Questions) ---
-            "Palindrome": ("What is a word or phrase that reads the same backward as forward?", "palindrome", "Starts with 'p'"),
-            "normalize": ("What must be done to a string (like removing spaces) before checking if it is a true palindrome?", "normalize", "A nine-letter verb."),
-            "yes": ("What is the answer for the number 121?", "yes", "A three-letter confirmation."),
-            "slice": ("What Python trick can quickly reverse a string to check it?", "slice", "A five-letter operation."),
-            "equality": ("What property must the reversed version of the string have?", "equality", "An eight-letter concept."),
-            "same": ("What is the reverse of a single character?", "same", "A four-letter word."),
-
-            # --- Fill-in: List Comp. (6 Questions) ---
-            "List Comp.": ("Fill in the blank: [i ___ range(10)] to create a list from 0 to 9.", "for i in", "The word 'in' is one of the blanks."),
-            "square_lc": ("What type of brackets are used to define a list comprehension?", "square", "A six-letter shape."),
-            "if": ("What optional keyword can filter items within a comprehension?", "if", "A two-letter keyword."),
-            "efficient": ("List comprehensions are generally more _ than traditional loops.", "efficient", "A nine-letter adjective."),
-            "expression": ("What is the part of the comprehension before the for keyword?", "expression", "A ten-letter word."),
-            "list": ("The result of a list comprehension is always what data type?", "list", "A four-letter data type."),
-
-            # --- Fill-in: String Slice (6 Questions) ---
-            "String Slice": ("Fill in the blank: my_str[2:] will return the string starting from the _ index.", "second", "An ordinal number."),
-            "fifth": ("Fill in the blank: my_str[:5] returns the string up to the _ index (but not including it).", "fifth", "An ordinal number."),
-            "step": ("What is the third, optional component of a slice (e.g., [::2])?", "step", "A four-letter word."),
-            "end": ("What does a negative index (e.g., [-1]) access?", "end", "The opposite of the start."),
-            "reverse": ("What is the result of my_str[::-1]?", "reverse", "A seven-letter action."),
-            "slice_char": ("What character is used to separate the slice indices?", ":", "Same as the dictionary separator."),
-
-            # --- Fill-in: Func Return (6 Questions) ---
-            "Func Return": ("Fill in the blank: def add(a): ___ a + 1 to complete the function.", "return", "A keyword to send a value back."),
-            "return value": ("What is the data sent back from a function called?", "return value", "Two words."),
-            "return_kw": ("What keyword can be used to exit a function without returning a value (it returns None)?", "return", "The same keyword."),
-            "multiple": ("A function can return how many values?", "multiple", "An eight-letter adjective."),
-            "pure": ("A function that computes and gives back a result is called what?", "pure", "A four-letter adjective."),
-            "calling": ("What is the process of getting the value from the function called?", "calling", "A seven-letter verb."),
-
-            # --- Fill-in: Class Init (6 Questions) ---
-            "Class Init": ("What method is automatically called when a new instance of a class is created? __ _ __", "init", "A special double-underscore method."),
-            "del": ("What is the name of the method that cleans up when an object is destroyed? __ ___ __", "del", "A three-letter double-underscore method."),
-            "class_init": ("What keyword is used to create a new object instance?", "class", "The name of the blueprint."),
-            "constructor": ("What is the entire initialization method officially called?", "constructor", "An eleven-letter word."),
-            "self_ci": ("What is the first argument of the _init_ method usually named?", "self", "A four-letter word."),
-            "instance_ci": ("What is the term for the object that is created from the class blueprint?", "instance", "An eight-letter word."),
-
-            # --- Fill-in: Try-Except (6 Questions) ---
-            "Try-Except": ("Fill in the blank: try: x = 1 / 0 ___ ZeroDivisionError: print(\"Error\")", "except", "A keyword to catch the error."),
-            "finally": ("What keyword executes code after the try block, regardless of errors?", "finally", "An eight-letter keyword."),
-            "else_te": ("What keyword executes code only if the try block succeeds (no errors)?", "else", "Same as the conditional fallback."),
-            "raise": ("What is the general keyword used to raise a user-defined error?", "raise", "A five-letter verb."),
-            "exception": ("What is the term for a detected error during execution?", "exception", "A ten-letter word."),
-            "try": ("Which block is where you place the code that might cause an error?", "try", "A three-letter keyword."),
-
-            # --- Fill-in: File Open (6 Questions) ---
-            "File Open": ("Fill in the blank: ___('file.txt', 'r') as f: to open a file.", "open", "A common built-in function."),
-            "w": ("What character is the mode for writing (overwriting) to a file?", "w", "A single lowercase letter."),
-            "r": ("What character is the mode for reading a file?", "r", "A single lowercase letter."),
-            "a": ("What character is the mode for appending to a file?", "a", "A single lowercase letter."),
-            "os": ("What is the name of the standard module for interacting with the operating system?", "os", "Two lowercase letters."),
-            "with": ("What keyword is often used to ensure a file is closed after use?", "with", "A four-letter keyword."),
-
-            # --- Fill-in: Dict Index (6 Questions) ---
-            "Dict Index": ("Fill in the blank: Dictionaries are indexed by what?", "keys", "The name for the left side of the pair."),
-            "items": ("What method returns a view object that displays a list of a dictionary's key-value tuple pairs?", "items", "A five-letter method."),
-            "keyerror": ("What is the error raised when you try to access a non-existent key?", "keyerror", "An eight-letter error type."),
-            "ordered": ("Dictionaries are always what (since Python 3.7)?", "ordered", "A seven-letter adjective."),
-            "in": ("How do you check for the existence of a key in a dictionary?", "in", "A two-letter keyword."),
-            "item": ("What is another name for a key-value pair?", "item", "A four-letter word."),
-
-            # --- Fill-in: Set Add (6 Questions) ---
-            "Set Add": ("Which method adds a single item to a set?", "add", "A three-letter method name."),
-            "update": ("What method is used to add multiple iterable items to a set?", "update", "A six-letter method."),
-            "hashable": ("The elements of a set must be what?", "hashable", "An eight-letter property."),
-            "set_empty": ("How do you create an empty set (it's not {})?", "set", "A three-letter function."),
-            "pop_set": ("What keyword is used to remove an arbitrary element from a set?", "pop", "A three-letter method."),
-            "set_fn": ("What is the built-in function used to create a set from a list?", "set", "A three-letter function."),
-
-            # --- Fill-in: Lambda (6 Questions) ---
-            "Lambda": ("What is the keyword for an anonymous one-line function?", "lambda", "Starts with 'l'"),
-            "lambda_kw": ("What keyword does a lambda function implicitly contain instead of return?", "lambda", "It's the same keyword."),
-            "expression_l": ("A lambda function can only contain a single what?", "expression", "A ten-letter word."),
-            "higher order": ("What are these functions most commonly used with (e.g., map and filter)?", "higher order", "Two words."),
-            "higher order_l": ("What type of function takes one or more functions as arguments?", "higher order", "Same as the common usage."),
-            "anonymous": ("What is a short, disposable function called?", "anonymous", "A nine-letter adjective."),
-
-            # --- Fill-in: Tuple Brackets (6 Questions) ---
-            "Tuple Brackets": ("Fill in the blank: Tuples use what type of brackets?", "parentheses", "Curved symbols."),
-            "immutable_t": ("What is the defining characteristic of a tuple?", "immutable", "An nine-letter property."),
-            "count": ("What method counts the number of times a value appears in a tuple?", "count", "A five-letter method."),
-            "one": ("What is the smallest size a tuple can be (e.g., (1,))?", "one", "A three-letter number."),
-            "unpacking": ("What is the process of extracting values from a tuple into separate variables called?", "unpacking", "A ten-letter word."),
-            "comma": ("What must a one-element tuple end with to be recognized as a tuple?", "comma", "A five-letter punctuation."),
-
-            # Fallback for topics not explicitly listed in the groups above:
-            "Tuples": ("What is the defining characteristic of a tuple?", "immutable", "It starts with 'i'."),
-            "Modules": ("What keyword is used to bring an external module into your script?", "import", "It starts with 'i'."),
-            "JSON": ("What format is commonly used to send data from a server to a web page?", "json", "An acronym."),
-            "Recursion": ("What is a function that calls itself called?", "recursion", "It starts with 'r'."),
-            "Inheritance": ("What is the mechanism where one class acquires the properties of another?", "inheritance", "It starts with 'i'."),
-            "Polymorphism": ("What is the ability of an object to take on many forms?", "polymorphism", "It starts with 'p'."),
-            "Abstraction": ("What is the process of hiding the complex reality while exposing only the necessary parts?", "abstraction", "It starts with 'a'."),
-            "Encapsulation": ("What is the concept of bundling data and the methods that operate on that data?", "encapsulation", "It starts with 'e'."),
         }
 
     def get_loot_table(self):
@@ -2029,12 +1841,12 @@ class RPGGame:
         self.minigame_window.configure(bg="#1C1C1C")
         self.minigame_window.protocol("WM_DELETE_WINDOW", self.end_minigame)
         self.minigame_window.attributes('-topmost', True)
-        
+
         # --- UI: Tree Wrapper ---
         self.main_frame = tk.Frame(
-            self.minigame_window, 
-            bg="#8B4513", 
-            padx=10, pady=10, 
+            self.minigame_window,
+            bg="#8B4513",
+            padx=10, pady=10,
             relief="ridge", borderwidth=4
         )
         self.main_frame.pack(fill="both", expand=True, padx=10, pady=10)
@@ -2135,14 +1947,17 @@ class RPGGame:
 
 
 if __name__ == "__main__":
+    # Initialize the database
+    db_utils.init_db()
+
     # Create the main root window but hide it initially
     root = tk.Tk()
     root.withdraw()
-    
+
     # Open the custom name selection window first
     # This class will handle its own creation, name input, and then
     # un-hide the root and start the RPGGame class.
     app = NameSelectionWindow(root)
-    
+
     # Start the main application loop
     root.mainloop()
