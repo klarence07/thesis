@@ -1205,7 +1205,20 @@ class RPGGame:
         positions = set()
 
         # Determine available topics (those not yet mastered)
-        available_topics = [t for t in self.topics if t not in self.mastered_topics]
+        # Filter available topics to only those that have questions matching the current difficulty
+        available_topics = []
+        topic_groups = self._get_topic_groups()
+
+        for topic in self.topics:
+            if topic in self.mastered_topics:
+                continue
+
+            # Check if this topic has any questions for the current difficulty
+            keys = topic_groups.get(topic, [topic])
+            filtered_keys = db_utils.filter_keys_by_difficulty(keys, self.difficulty)
+
+            if filtered_keys:
+                available_topics.append(topic)
 
         npc_count = self.get_npc_count_for_level()
 
