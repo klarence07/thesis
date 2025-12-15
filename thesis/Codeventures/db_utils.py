@@ -327,7 +327,7 @@ def get_leaderboard(difficulty):
         SELECT name, score, time_taken FROM leaderboard
         WHERE difficulty = ?
         ORDER BY score DESC, time_taken ASC
-        LIMIT 10
+        LIMIT 50
     ''', (difficulty,))
     rows = cursor.fetchall()
     conn.close()

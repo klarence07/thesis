@@ -554,7 +554,7 @@ class LeaderboardWindow:
     def __init__(self, root, difficulty, player_name, score, time_taken):
         self.window = tk.Toplevel(root)
         self.window.title("Victory & Leaderboard")
-        self.window.geometry("500x400")
+        self.window.geometry("600x500")
         self.window.configure(bg="#1C1C1C")
 
         # Ensure closing this window closes the app
@@ -576,16 +576,33 @@ class LeaderboardWindow:
 
         tk.Label(self.main_frame, text=f"~ {difficulty} Leaderboard ~", font=("Consolas", 16, "bold", "underline"), bg="#8B4513", fg="#FFFFFF").pack(pady=(20, 10))
 
-        # Leaderboard Table Frame
-        table_frame = tk.Frame(self.main_frame, bg="#2B2B2B", padx=5, pady=5)
-        table_frame.pack(fill="both", expand=True, padx=20)
+        # Scrollable Leaderboard Table Frame
+        outer_table_frame = tk.Frame(self.main_frame, bg="#2B2B2B", padx=2, pady=2)
+        outer_table_frame.pack(fill="both", expand=True, padx=20)
+
+        canvas = tk.Canvas(outer_table_frame, bg="#2B2B2B", highlightthickness=0)
+        scrollbar = tk.Scrollbar(outer_table_frame, orient="vertical", command=canvas.yview)
+
+        table_frame = tk.Frame(canvas, bg="#2B2B2B")
+
+        # Configure scrollable area
+        table_frame.bind(
+            "<Configure>",
+            lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
+        )
+
+        canvas.create_window((0, 0), window=table_frame, anchor="nw")
+        canvas.configure(yscrollcommand=scrollbar.set)
+
+        canvas.pack(side="left", fill="both", expand=True)
+        scrollbar.pack(side="right", fill="y")
 
         # Headers
         headers = ["Rank", "Name", "Score", "Time"]
         for i, h in enumerate(headers):
             tk.Label(table_frame, text=h, font=("Consolas", 10, "bold"), bg="#2B2B2B", fg="#FFD700", width=10 if i > 0 else 5).grid(row=0, column=i, padx=5, pady=5)
 
-        # Fetch Data
+        # Fetch Data (Top 50)
         top_scores = db_utils.get_leaderboard(difficulty)
 
         # Display Data
