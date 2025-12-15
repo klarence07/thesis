@@ -37,14 +37,39 @@ def init_db():
         )
     ''')
 
-    # Check if table is empty
+    # Check if questions table is empty
     cursor.execute('SELECT count(*) FROM questions')
     if cursor.fetchone()[0] == 0:
         populate_questions(cursor)
         print("Database initialized with default questions.")
 
+    # Check if leaderboard is empty
+    cursor.execute('SELECT count(*) FROM leaderboard')
+    if cursor.fetchone()[0] == 0:
+        populate_leaderboard(cursor)
+        print("Database initialized with sample leaderboard entries.")
+
     conn.commit()
     conn.close()
+
+def populate_leaderboard(cursor):
+    # Sample data: (name, score, time_taken, difficulty)
+    sample_scores = [
+        ("Alice", 150, 45.5, "Easy"),
+        ("Bob", 120, 55.2, "Easy"),
+        ("Charlie", 100, 60.0, "Easy"),
+        ("David", 250, 80.5, "Medium"),
+        ("Eve", 220, 95.0, "Medium"),
+        ("Frank", 350, 120.0, "Hard"),
+        ("Grace", 300, 130.5, "Hard"),
+        ("Admin", 500, 30.0, "Hard")
+    ]
+
+    for name, score, time_taken, difficulty in sample_scores:
+        cursor.execute('''
+            INSERT INTO leaderboard (name, score, time_taken, difficulty)
+            VALUES (?, ?, ?, ?)
+        ''', (name, score, time_taken, difficulty))
 
 def populate_questions(cursor):
     # (Question, Answer, Hint, Difficulty)
