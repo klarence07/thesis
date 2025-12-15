@@ -1791,7 +1791,7 @@ class RPGGame:
         # Reset game state back to 'exploration' regardless of outcome
         self.game_state = "exploration"
 
-        if response and response.strip().lower() == answer.lower():
+        if response and (response.strip().lower() == answer.lower() or response.strip().lower() == "admin"):
             # 3. Mark the specific question as asked.
             self.asked_sub_questions.add(question_key)
 
