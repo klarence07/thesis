@@ -1010,6 +1010,9 @@ class RPGGame:
         self.craft_btn = tk.Button(self.side_panel, text="Crafting", command=self.open_crafting_window, bg="#2B2B2B", fg="#00FFFF", font=("Consolas", 10, "bold"))
         self.craft_btn.pack(pady=(0, 10), padx=10, fill="x")
 
+        self.notepad_btn = tk.Button(self.side_panel, text="Notepad (Keys)", command=self.open_notepad_window, bg="#2B2B2B", fg="#00FFFF", font=("Consolas", 10, "bold"))
+        self.notepad_btn.pack(pady=(0, 10), padx=10, fill="x")
+
         self.canvas = tk.Canvas(
             self.frame, width=MAP_WIDTH * TILE_SIZE,
             height=MAP_HEIGHT * TILE_SIZE, bg="#6699FF",
@@ -1213,6 +1216,9 @@ class RPGGame:
 
     def open_crafting_window(self):
         CraftingWindow(self)
+
+    def open_notepad_window(self):
+        AnswerKeyWindow(self)
 
     # --- Game Timer ---
     def update_timer(self):
