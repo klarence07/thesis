@@ -291,8 +291,5 @@ def filter_keys_by_difficulty(keys_list, chosen_difficulty):
     filtered_keys = [row['key'] for row in rows]
 
     # If the filtered list is empty (e.g. strict filtering left no options),
-    # fallback to returning the original list to avoid soft-lock.
-    if not filtered_keys:
-        return keys_list
-
+    # return the empty list. The calling code should handle this.
     return filtered_keys

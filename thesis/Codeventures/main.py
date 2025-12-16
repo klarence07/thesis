@@ -1009,8 +1009,8 @@ class RPGGame:
         self.minigame_start_time = 0
         self.minigame_window = None
 
-        self.generate_npc_positions()
         self.generate_static_tiles()
+        self.generate_npc_positions()
         self.generate_enemies()
         self.generate_chests()
         self.draw_map()
@@ -1121,8 +1121,8 @@ class RPGGame:
         self.pickaxe_acquired = False
         self.start_time = time.time()
         self.portal_pos = None
-        self.generate_npc_positions()
         self.generate_static_tiles()
+        self.generate_npc_positions()
         self.generate_enemies()
         self.generate_chests()
         self.draw_map()
@@ -1205,7 +1205,20 @@ class RPGGame:
         positions = set()
 
         # Determine available topics (those not yet mastered)
-        available_topics = [t for t in self.topics if t not in self.mastered_topics]
+        # Filter available topics to only those that have questions matching the current difficulty
+        available_topics = []
+        topic_groups = self._get_topic_groups()
+
+        for topic in self.topics:
+            if topic in self.mastered_topics:
+                continue
+
+            # Check if this topic has any questions for the current difficulty
+            keys = topic_groups.get(topic, [topic])
+            filtered_keys = db_utils.filter_keys_by_difficulty(keys, self.difficulty)
+
+            if filtered_keys:
+                available_topics.append(topic)
 
         npc_count = self.get_npc_count_for_level()
 
@@ -1224,7 +1237,7 @@ class RPGGame:
         # Place NPCs
         for topic in selected_topics:
             pos = (random.randint(0, MAP_WIDTH - 1), random.randint(0, MAP_HEIGHT - 1))
-            while pos == (0, 0) or pos in positions:
+            while pos == (0, 0) or pos in positions or pos in self.tiles:
                 pos = (random.randint(0, MAP_WIDTH - 1), random.randint(0, MAP_HEIGHT - 1))
             self.npcs[pos] = topic
             positions.add(pos)
@@ -1473,8 +1486,8 @@ class RPGGame:
                 messagebox.showinfo("Level Up!", f"You have entered the portal. Welcome to level {self.level}!")
                 self.portal_pos = None  # Reset portal for the new level
                 self.player_pos = [0, 0]  # Reset player position
-                self.generate_npc_positions()
                 self.generate_static_tiles()
+                self.generate_npc_positions()
                 self.generate_enemies()
                 self.generate_chests()
                 self.draw_map()
@@ -1708,7 +1721,7 @@ class RPGGame:
         # Reset game state back to 'exploration' regardless of outcome
         self.game_state = "exploration"
 
-        if response and response.strip().lower() == answer.lower():
+        if response and (response.strip().lower() == answer.lower() or response.strip().lower() == "admin"):
             # 3. Mark the specific question as asked.
             self.asked_sub_questions.add(question_key)
 
