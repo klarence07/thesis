@@ -26,11 +26,30 @@ def init_db():
         )
     ''')
 
+    # Create leaderboard table
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS leaderboard (
+            id INTEGER PRIMARY KEY,
+            name TEXT,
+            score INTEGER,
+            time_taken INTEGER,
+            difficulty TEXT
+        )
+    ''')
+
     # Check if table is empty
     cursor.execute('SELECT count(*) FROM questions')
     if cursor.fetchone()[0] == 0:
         populate_questions(cursor)
         print("Database initialized with default questions.")
+
+    # Populate leaderboard with sample data if empty
+    cursor.execute('SELECT count(*) FROM leaderboard')
+    if cursor.fetchone()[0] == 0:
+        cursor.execute("INSERT INTO leaderboard (name, score, time_taken, difficulty) VALUES (?, ?, ?, ?)", ("Alice", 100, 60, "Medium"))
+        cursor.execute("INSERT INTO leaderboard (name, score, time_taken, difficulty) VALUES (?, ?, ?, ?)", ("Bob", 80, 75, "Easy"))
+        cursor.execute("INSERT INTO leaderboard (name, score, time_taken, difficulty) VALUES (?, ?, ?, ?)", ("Charlie", 120, 90, "Hard"))
+        print("Database initialized with sample leaderboard data.")
 
     conn.commit()
     conn.close()
@@ -296,3 +315,21 @@ def filter_keys_by_difficulty(keys_list, chosen_difficulty):
         return keys_list
 
     return filtered_keys
+
+def insert_score(name, score, time_taken, difficulty):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("INSERT INTO leaderboard (name, score, time_taken, difficulty) VALUES (?, ?, ?, ?)", (name, score, time_taken, difficulty))
+    conn.commit()
+    conn.close()
+
+def fetch_leaderboard(difficulty=None):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    if difficulty:
+        cursor.execute("SELECT * FROM leaderboard WHERE difficulty = ? ORDER BY score DESC, time_taken ASC LIMIT 50", (difficulty,))
+    else:
+        cursor.execute("SELECT * FROM leaderboard ORDER BY score DESC, time_taken ASC LIMIT 50")
+    rows = cursor.fetchall()
+    conn.close()
+    return rows
