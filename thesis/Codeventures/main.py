@@ -550,6 +550,76 @@ class CraftingWindow:
             self.craft_btn.config(state="disabled")
 
 
+class LeaderboardWindow:
+    def __init__(self, game):
+        self.game = game
+        self.window = tk.Toplevel(game.root)
+        self.window.title("Leaderboard")
+        self.window.geometry("500x400")
+        self.window.configure(bg="#1C1C1C")
+
+        # --- UI: Wrapper ---
+        self.main_frame = tk.Frame(
+            self.window,
+            bg="#8B4513",
+            padx=10, pady=10,
+            relief="ridge", borderwidth=4
+        )
+        self.main_frame.pack(fill="both", expand=True, padx=10, pady=10)
+
+        tk.Label(self.main_frame, text=f"Leaderboard ({self.game.difficulty})", font=("Consolas", 16, "bold"), bg="#8B4513", fg="#33FF33").pack(pady=10)
+
+        # Scrollable Frame
+        self.canvas = tk.Canvas(self.main_frame, bg="#2B2B2B", highlightthickness=0)
+        self.scrollbar = tk.Scrollbar(self.main_frame, orient="vertical", command=self.canvas.yview)
+        self.scrollable_frame = tk.Frame(self.canvas, bg="#2B2B2B")
+
+        self.scrollable_frame.bind(
+            "<Configure>",
+            lambda e: self.canvas.configure(
+                scrollregion=self.canvas.bbox("all")
+            )
+        )
+
+        self.canvas.create_window((0, 0), window=self.scrollable_frame, anchor="nw")
+        self.canvas.configure(yscrollcommand=self.scrollbar.set)
+
+        self.canvas.pack(side="left", fill="both", expand=True, padx=5, pady=5)
+        self.scrollbar.pack(side="right", fill="y", pady=5)
+
+        self.load_leaderboard()
+
+        self.close_btn = tk.Button(self.main_frame, text="Close Game", command=self.window.destroy, bg="#FF3366", fg="#1C1C1C", font=("Consolas", 12, "bold"))
+        self.close_btn.pack(pady=10)
+        self.close_btn.config(command=self.close_and_quit)
+
+    def load_leaderboard(self):
+        scores = db_utils.fetch_leaderboard(self.game.difficulty)
+
+        # Header
+        header_frame = tk.Frame(self.scrollable_frame, bg="#2B2B2B")
+        header_frame.pack(fill="x", pady=2)
+        tk.Label(header_frame, text="Rank", width=5, bg="#2B2B2B", fg="#FFD700", font=("Consolas", 10, "bold")).pack(side="left")
+        tk.Label(header_frame, text="Name", width=15, bg="#2B2B2B", fg="#FFD700", font=("Consolas", 10, "bold")).pack(side="left")
+        tk.Label(header_frame, text="Score (XP)", width=10, bg="#2B2B2B", fg="#FFD700", font=("Consolas", 10, "bold")).pack(side="left")
+        tk.Label(header_frame, text="Time (s)", width=10, bg="#2B2B2B", fg="#FFD700", font=("Consolas", 10, "bold")).pack(side="left")
+
+        for idx, row in enumerate(scores, 1):
+            row_frame = tk.Frame(self.scrollable_frame, bg="#2B2B2B")
+            row_frame.pack(fill="x", pady=2)
+
+            fg_color = "#33FF33" if row['name'] == self.game.player_name else "#FFFFFF"
+
+            tk.Label(row_frame, text=f"{idx}", width=5, bg="#2B2B2B", fg=fg_color, font=("Consolas", 10)).pack(side="left")
+            tk.Label(row_frame, text=f"{row['name']}", width=15, bg="#2B2B2B", fg=fg_color, font=("Consolas", 10)).pack(side="left")
+            tk.Label(row_frame, text=f"{row['score']}", width=10, bg="#2B2B2B", fg=fg_color, font=("Consolas", 10)).pack(side="left")
+            tk.Label(row_frame, text=f"{row['time_taken']}", width=10, bg="#2B2B2B", fg=fg_color, font=("Consolas", 10)).pack(side="left")
+
+    def close_and_quit(self):
+        self.window.destroy()
+        self.game.root.quit()
+
+
 class InventoryWindow:
     def __init__(self, game):
         self.game = game
@@ -1466,7 +1536,10 @@ class RPGGame:
                 if AUDIO_ENABLED:
                     self.play_sound("victory.wav")
 
-                self.root.quit()
+                # Save score and show leaderboard
+                time_taken = int(time.time() - self.start_time)
+                db_utils.insert_score(self.player_name, self.xp, time_taken, self.difficulty)
+                LeaderboardWindow(self)
                 return
             else:
                 self.level += 1
