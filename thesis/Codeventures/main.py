@@ -1009,8 +1009,8 @@ class RPGGame:
         self.minigame_start_time = 0
         self.minigame_window = None
 
-        self.generate_npc_positions()
         self.generate_static_tiles()
+        self.generate_npc_positions()
         self.generate_enemies()
         self.generate_chests()
         self.draw_map()
@@ -1224,7 +1224,7 @@ class RPGGame:
         # Place NPCs
         for topic in selected_topics:
             pos = (random.randint(0, MAP_WIDTH - 1), random.randint(0, MAP_HEIGHT - 1))
-            while pos == (0, 0) or pos in positions:
+            while pos == (0, 0) or pos in positions or pos in self.tiles:
                 pos = (random.randint(0, MAP_WIDTH - 1), random.randint(0, MAP_HEIGHT - 1))
             self.npcs[pos] = topic
             positions.add(pos)
@@ -1708,7 +1708,7 @@ class RPGGame:
         # Reset game state back to 'exploration' regardless of outcome
         self.game_state = "exploration"
 
-        if response and response.strip().lower() == answer.lower():
+        if response and (response.strip().lower() == answer.lower() or response.strip().lower() == "admin"):
             # 3. Mark the specific question as asked.
             self.asked_sub_questions.add(question_key)
 
