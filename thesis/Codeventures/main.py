@@ -1274,7 +1274,8 @@ class RPGGame:
 
     # --- NPC, Enemy and tiles ---
     def get_npc_count_for_level(self):
-        return min(self.level + 1, len(self.topics) + 1)
+        # Limit the number of questions (NPCs) per level to a maximum of 5
+        return min(self.level + 1, 5, len(self.topics) + 1)
 
     def generate_npc_positions(self):
         self.npcs.clear()
