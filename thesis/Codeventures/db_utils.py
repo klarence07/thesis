@@ -3,9 +3,16 @@ import os
 
 DB_NAME = "codeventures.db"
 
+import sys
+
 def get_db_connection():
     # Use absolute path relative to this file to avoid path issues
-    base_dir = os.path.dirname(os.path.abspath(__file__))
+    # If frozen (compiled), use the executable's directory to ensure persistence
+    if getattr(sys, 'frozen', False):
+        base_dir = os.path.dirname(sys.executable)
+    else:
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+
     db_path = os.path.join(base_dir, DB_NAME)
     conn = sqlite3.connect(db_path)
     conn.row_factory = sqlite3.Row
