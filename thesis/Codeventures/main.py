@@ -6,6 +6,7 @@ from PIL import Image, ImageDraw, ImageFont, ImageTk
 import time
 import json
 import db_utils
+import sys
 
 # Handle Audio (Prevent crash if not on Windows)
 try:
@@ -816,6 +817,7 @@ class NameSelectionWindow:
         self.window.configure(bg="#1C1C1C")
         self.window.resizable(False, False)
 
+        self.window.protocol("WM_DELETE_WINDOW", self.on_close)
         self.window.grab_set()
 
         # --- UI: Tree Wrapper ---
@@ -912,6 +914,12 @@ class NameSelectionWindow:
                 selectcolor="#2B2B2B",
                 font=("Consolas", 10, "bold")
             ).pack(side="left", padx=10)
+
+    def on_close(self):
+        """Handle window closure."""
+        self.window.destroy()
+        self.master.destroy()
+        sys.exit()
 
     def start_game(self, gender):
         player_name = self.name_entry.get().strip()
@@ -1286,7 +1294,7 @@ class RPGGame:
 
         base_dir = get_base_path()
         if not all(os.path.exists(os.path.join(base_dir, img)) for img in
-                   ["grass.png", "npc.png", "enemy.png", "goblin.png", "typomancer.png", "silver_chest.png",
+                   ["grass.png", "Npc.png", "enemy.png", "goblin.png", "typomancer.png", "silver_chest.png",
                     "gold_chest.png", "pickaxe.png", "portal.png"]):
             create_placeholder_images(base_dir)
 
