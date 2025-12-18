@@ -23,6 +23,24 @@ MAP_WIDTH = 15
 MAP_HEIGHT = 12
 HAZARDS = ["spikes", "fire"]
 
+def get_base_path():
+    """ Get absolute path to resource, works for dev and for PyInstaller """
+    if getattr(sys, 'frozen', False):
+        # PyInstaller creates a temp folder and stores path in _MEIPASS
+        base_path = sys._MEIPASS
+    else:
+        base_path = os.path.dirname(os.path.abspath(__file__))
+    return base_path
+
+def get_user_data_path():
+    """ Get path for persistent data (savegame, db) """
+    if getattr(sys, 'frozen', False):
+        # If frozen, use the directory where the executable is located
+        return os.path.dirname(sys.executable)
+    else:
+        # If running from source, use the script directory
+        return os.path.dirname(os.path.abspath(__file__))
+
 
 def create_placeholder_images(base_dir):
     """Create placeholder images if not found, including stride simulation."""
@@ -1160,13 +1178,15 @@ class RPGGame:
             "has_goblin_spawned": self.has_goblin_spawned,
             "portal_pos": self.portal_pos
         }
-        with open("savegame.json", "w") as f:
+        save_path = os.path.join(get_user_data_path(), "savegame.json")
+        with open(save_path, "w") as f:
             json.dump(game_state, f)
         messagebox.showinfo("Save Successful", "Game has been saved!")
 
     def load_game(self):
         try:
-            with open("savegame.json", "r") as f:
+            save_path = os.path.join(get_user_data_path(), "savegame.json")
+            with open(save_path, "r") as f:
                 game_state = json.load(f)
             self.player_name = game_state["player_name"]
             self.gender = game_state["gender"]
@@ -1264,7 +1284,7 @@ class RPGGame:
                 print(f"Error loading {path}: {e}")
                 return None
 
-        base_dir = os.path.dirname(os.path.abspath(__file__))
+        base_dir = get_base_path()
         if not all(os.path.exists(os.path.join(base_dir, img)) for img in
                    ["grass.png", "npc.png", "enemy.png", "goblin.png", "typomancer.png", "silver_chest.png",
                     "gold_chest.png", "pickaxe.png", "portal.png"]):
