@@ -14,6 +14,10 @@ try:
 except ImportError:
     AUDIO_ENABLED = False
 
+# Constants for Admin Credentials
+ADMIN_USERNAME = "admin"
+ADMIN_PASSWORD = "admin123"
+
 TILE_SIZE = 50
 MAP_WIDTH = 15
 MAP_HEIGHT = 12
@@ -593,8 +597,32 @@ class LeaderboardWindow:
         self.close_btn.pack(pady=10)
         self.close_btn.config(command=self.close_and_quit)
 
+        self.reset_btn = tk.Button(self.main_frame, text="Reset Leaderboard", command=self.reset_leaderboard, bg="#FFD700", fg="#1C1C1C", font=("Consolas", 10, "bold"))
+        self.reset_btn.pack(pady=5)
+
+    def reset_leaderboard(self):
+        username = simpledialog.askstring("Admin Login", "Enter Admin Username:")
+        if not username:
+            return
+
+        password = simpledialog.askstring("Admin Login", "Enter Admin Password:", show="*")
+        if not password:
+            return
+
+        if username == ADMIN_USERNAME and password == ADMIN_PASSWORD:
+            if messagebox.askyesno("Confirm Reset", "Are you sure you want to reset the leaderboard? This cannot be undone."):
+                db_utils.reset_leaderboard()
+                messagebox.showinfo("Success", "Leaderboard has been reset.")
+                self.load_leaderboard()
+        else:
+            messagebox.showerror("Error", "Invalid credentials!")
+
     def load_leaderboard(self):
         scores = db_utils.fetch_leaderboard(self.game.difficulty)
+
+        # Clear existing widgets in scrollable_frame
+        for widget in self.scrollable_frame.winfo_children():
+            widget.destroy()
 
         # Header
         header_frame = tk.Frame(self.scrollable_frame, bg="#2B2B2B")
