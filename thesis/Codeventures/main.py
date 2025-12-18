@@ -431,7 +431,7 @@ class StatsSystem:
         self.hp_label.pack(side="left", padx=5)
         self.hp_btn = tk.Button(self.hp_frame, text="Upgrade Path of the Warrior (+20 HP)",
                                 command=lambda: self.upgrade_stat("HP"),
-                                bg="#33CCFF", fg="#1C1C1C")
+                                bg="#33CCFF", fg="#1C1C1C", cursor="hand2")
         self.hp_btn.pack(side="right", padx=5)
 
         self.wits_frame = tk.Frame(self.main_frame, bg="#2B2B2B")
@@ -440,7 +440,7 @@ class StatsSystem:
                                    bg="#2B2B2B", fg="#33FF33")
         self.wits_label.pack(side="left", padx=5)
         self.wits_btn = tk.Button(self.wits_frame, text="Upgrade Path of the Coder (+1 Clue)",
-                                  command=lambda: self.upgrade_stat("Wits"), bg="#33CCFF", fg="#1C1C1C")
+                                  command=lambda: self.upgrade_stat("Wits"), bg="#33CCFF", fg="#1C1C1C", cursor="hand2")
         self.wits_btn.pack(side="right", padx=5)
 
         self.update_display()
@@ -505,7 +505,7 @@ class CraftingWindow:
         self.recipe_label.pack(side="left", padx=5)
 
         self.craft_btn = tk.Button(self.slipperoo_frame, text="Craft", command=lambda: self.craft_item("Slipperoo!"),
-                                   bg="#33CCFF", fg="#1C1C1C")
+                                   bg="#33CCFF", fg="#1C1C1C", cursor="hand2")
         self.craft_btn.pack(side="right", padx=5)
 
         self.update_display()
@@ -589,7 +589,7 @@ class LeaderboardWindow:
 
         self.load_leaderboard()
 
-        self.close_btn = tk.Button(self.main_frame, text="Close Game", command=self.window.destroy, bg="#FF3366", fg="#1C1C1C", font=("Consolas", 12, "bold"))
+        self.close_btn = tk.Button(self.main_frame, text="Close Game", command=self.window.destroy, bg="#FF3366", fg="#1C1C1C", font=("Consolas", 12, "bold"), cursor="hand2")
         self.close_btn.pack(pady=10)
         self.close_btn.config(command=self.close_and_quit)
 
@@ -830,6 +830,7 @@ class NameSelectionWindow:
             bg="#33CCFF",
             fg="#1C1C1C",
             font=("Consolas", 12, "bold"),
+            cursor="hand2",
             command=lambda: self.start_game("boy")
         ).pack(side="left", padx=15)
 
@@ -840,6 +841,7 @@ class NameSelectionWindow:
             bg="#FF3366",
             fg="#1C1C1C",
             font=("Consolas", 12, "bold"),
+            cursor="hand2",
             command=lambda: self.start_game("girl")
         ).pack(side="right", padx=15)
 
@@ -994,23 +996,35 @@ class RPGGame:
         )
         self.inventory_btn.pack(pady=(20, 10), padx=10, fill="x")
 
+        # Button styles
+        btn_style = {
+            "bg": "#2B2B2B",
+            "fg": "#00FFFF",
+            "font": ("Consolas", 10, "bold"),
+            "relief": "raised",
+            "borderwidth": 2,
+            "activebackground": "#404040",
+            "activeforeground": "#00FFFF",
+            "cursor": "hand2"
+        }
+
         # Save and Load buttons
-        self.save_btn = tk.Button(self.side_panel, text="Save Game", command=self.save_game, bg="#33CCFF", fg="#1C1C1C", font=("Consolas", 10, "bold"))
+        self.save_btn = tk.Button(self.side_panel, text="Save Game", command=self.save_game, **btn_style)
         self.save_btn.pack(pady=(5, 5), padx=10, fill="x")
 
-        self.load_btn = tk.Button(self.side_panel, text="Load Game", command=self.load_game, bg="#6699FF", fg="#1C1C1C", font=("Consolas", 10, "bold"))
+        self.load_btn = tk.Button(self.side_panel, text="Load Game", command=self.load_game, **btn_style)
         self.load_btn.pack(pady=(0, 10), padx=10, fill="x")
 
-        self.upgrade_btn = tk.Button(self.side_panel, text="Upgrade Stats", command=self.open_stats_window, bg="#2B2B2B", fg="#00FFFF", font=("Consolas", 10, "bold"))
+        self.upgrade_btn = tk.Button(self.side_panel, text="Upgrade Stats", command=self.open_stats_window, **btn_style)
         self.upgrade_btn.pack(pady=(0, 10), padx=10, fill="x")
 
-        self.encyclopedia_btn = tk.Button(self.side_panel, text="Encycodepedia", command=self.open_encyclopedia, bg="#2B2B2B", fg="#00FFFF", font=("Consolas", 10, "bold"))
+        self.encyclopedia_btn = tk.Button(self.side_panel, text="Encycodepedia", command=self.open_encyclopedia, **btn_style)
         self.encyclopedia_btn.pack(pady=(0, 10), padx=10, fill="x")
 
-        self.craft_btn = tk.Button(self.side_panel, text="Crafting", command=self.open_crafting_window, bg="#2B2B2B", fg="#00FFFF", font=("Consolas", 10, "bold"))
+        self.craft_btn = tk.Button(self.side_panel, text="Crafting", command=self.open_crafting_window, **btn_style)
         self.craft_btn.pack(pady=(0, 10), padx=10, fill="x")
 
-        self.leaderboard_btn = tk.Button(self.side_panel, text="Leaderboard", command=self.open_leaderboard, bg="#2B2B2B", fg="#00FFFF", font=("Consolas", 10, "bold"))
+        self.leaderboard_btn = tk.Button(self.side_panel, text="Leaderboard", command=self.open_leaderboard, **btn_style)
         self.leaderboard_btn.pack(pady=(0, 10), padx=10, fill="x")
 
         self.canvas = tk.Canvas(
