@@ -356,6 +356,89 @@ class CombatSystem:
         self.game.update_status()
 
 
+class ThinkingBubbleDialog:
+    def __init__(self, parent, title, prompt):
+        self.result = None
+        self.window = tk.Toplevel(parent)
+        self.window.title(title)
+        self.window.overrideredirect(True) # borderless
+        self.window.configure(bg="#1C1C1C")
+        self.window.attributes('-alpha', 0.95) # Slight transparency
+
+        # Dimensions
+        width = 400
+        height = 300 # Adjusted for question text
+
+        # Center using the existing helper
+        center_window(self.window, width, height)
+
+        # Canvas for the bubble shape
+        self.canvas = tk.Canvas(self.window, width=width, height=height, bg="#1C1C1C", highlightthickness=0)
+        self.canvas.pack(fill="both", expand=True)
+
+        # Draw bubble (Rounded Rect / Cloud style)
+        # For simplicity and neon theme: A rounded rectangle with a tail
+        bg_color = "#2B2B2B"
+        outline_color = "#00FFFF"
+
+        # Main bubble body
+        self.round_rectangle(10, 10, width-10, height-50, radius=30, fill=bg_color, outline=outline_color, width=3)
+
+        # Tail (Thought bubble circles)
+        self.canvas.create_oval(width//2 - 10, height-55, width//2 + 10, height-35, fill=bg_color, outline=outline_color, width=3)
+        self.canvas.create_oval(width//2 - 5, height-30, width//2 + 5, height-20, fill=bg_color, outline=outline_color, width=3)
+
+        # Content
+        # We place widgets on top of the canvas using place or create_window
+
+        # Question Label
+        lbl_frame = tk.Frame(self.window, bg=bg_color)
+        tk.Label(lbl_frame, text=prompt, bg=bg_color, fg="#33FF33", font=("Consolas", 12), wraplength=350, justify="center").pack()
+        self.canvas.create_window(width//2, (height-60)//2 - 20, window=lbl_frame)
+
+        # Entry
+        self.entry = tk.Entry(self.window, font=("Consolas", 14), bg="#1C1C1C", fg="#00FFFF", insertbackground="#00FFFF")
+        self.canvas.create_window(width//2, (height-60)//2 + 50, window=self.entry, width=250)
+        self.entry.focus_set()
+        self.entry.bind("<Return>", self.ok)
+
+        # Button
+        btn = tk.Button(self.window, text="Think!", command=self.ok, bg="#33CCFF", fg="#1C1C1C", font=("Consolas", 10, "bold"))
+        self.canvas.create_window(width//2, (height-60)//2 + 90, window=btn)
+
+        # Make modal
+        self.window.transient(parent)
+        self.window.grab_set()
+        parent.wait_window(self.window)
+
+    def round_rectangle(self, x1, y1, x2, y2, radius=25, **kwargs):
+        points = [x1+radius, y1,
+                  x1+radius, y1,
+                  x2-radius, y1,
+                  x2-radius, y1,
+                  x2, y1,
+                  x2, y1+radius,
+                  x2, y1+radius,
+                  x2, y2-radius,
+                  x2, y2-radius,
+                  x2, y2,
+                  x2-radius, y2,
+                  x2-radius, y2,
+                  x1+radius, y2,
+                  x1+radius, y2,
+                  x1, y2,
+                  x1, y2-radius,
+                  x1, y2-radius,
+                  x1, y1+radius,
+                  x1, y1+radius,
+                  x1, y1]
+        return self.canvas.create_polygon(points, **kwargs, smooth=True)
+
+    def ok(self, event=None):
+        self.result = self.entry.get()
+        self.window.destroy()
+
+
 class EncycodepediaWindow:
     def __init__(self, game):
         self.game = game
@@ -1864,8 +1947,10 @@ class RPGGame:
         question_data = self.get_question_data(question_key)
         question, answer, hint = question_data
 
-        response = simpledialog.askstring("Question",
-                                          f"Hello, {self.player_name}! We're exploring {topic} today.\n\n{question}")
+        # Use the new Thinking Bubble Dialog
+        bubble = ThinkingBubbleDialog(self.root, "Question",
+                                      f"Hello, {self.player_name}! We're exploring {topic} today.\n\n{question}")
+        response = bubble.result
 
         # Reset game state back to 'exploration' regardless of outcome
         self.game_state = "exploration"
