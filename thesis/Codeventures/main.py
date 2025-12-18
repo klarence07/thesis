@@ -962,7 +962,6 @@ class RPGGame:
     def __init__(self, root, gender="boy", player_name="Hero", difficulty="Medium"):
         self.root = root
         self.root.title("Memory Lane RPG")
-        center_window(self.root)
         self.root.configure(bg="#1C1C1C")
 
         self.gender = gender
@@ -1167,6 +1166,8 @@ class RPGGame:
         self.generate_chests()
         self.draw_map()
         self.bind_keys()
+
+        center_window(self.root)
 
         self.root.after(1000, self.update_timer)
 
