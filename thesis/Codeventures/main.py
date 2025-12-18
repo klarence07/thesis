@@ -24,6 +24,30 @@ MAP_WIDTH = 15
 MAP_HEIGHT = 12
 HAZARDS = ["spikes", "fire"]
 
+def center_window(window, width=None, height=None):
+    """Centers the window on the screen and optionally sets its size."""
+    window.update_idletasks()
+
+    # If width/height not provided, use current requested size
+    if width is None:
+        width = window.winfo_reqwidth()
+    if height is None:
+        height = window.winfo_reqheight()
+
+    screen_width = window.winfo_screenwidth()
+    screen_height = window.winfo_screenheight()
+
+    # Ensure window doesn't exceed screen size
+    if width > screen_width:
+        width = screen_width - 20
+    if height > screen_height:
+        height = screen_height - 50
+
+    x = (screen_width - width) // 2
+    y = (screen_height - height) // 2
+
+    window.geometry(f"{width}x{height}+{x}+{y}")
+
 def get_base_path():
     """ Get absolute path to resource, works for dev and for PyInstaller """
     if getattr(sys, 'frozen', False):
@@ -337,7 +361,7 @@ class EncycodepediaWindow:
         self.game = game
         self.window = tk.Toplevel(game.root)
         self.window.title("Encycodepedia")
-        self.window.geometry("400x500")
+        center_window(self.window, 400, 500)
         self.window.configure(bg="#1C1C1C")
 
         self.all_entries = {
@@ -431,7 +455,7 @@ class StatsSystem:
         self.game = game
         self.window = tk.Toplevel(game.root)
         self.window.title("Upgrade Stats")
-        self.window.geometry("350x240")
+        center_window(self.window, 350, 240)
         self.window.configure(bg="#1C1C1C")
 
         # --- UI: Tree Wrapper ---
@@ -499,7 +523,7 @@ class CraftingWindow:
         self.game = game
         self.window = tk.Toplevel(game.root)
         self.window.title("Crafting")
-        self.window.geometry("400x200")
+        center_window(self.window, 400, 200)
         self.window.configure(bg="#1C1C1C")
 
         # --- UI: Tree Wrapper ---
@@ -578,7 +602,7 @@ class LeaderboardWindow:
         self.game = game
         self.window = tk.Toplevel(game.root)
         self.window.title("Leaderboard")
-        self.window.geometry("500x400")
+        center_window(self.window, 500, 400)
         self.window.configure(bg="#1C1C1C")
 
         # --- UI: Wrapper ---
@@ -672,9 +696,9 @@ class InventoryWindow:
         self.game = game
         self.window = tk.Toplevel(game.root)
         self.window.title("Inventory")
-        self.window.geometry("450x450")
+        center_window(self.window, 450, 450)
         self.window.configure(bg="#1C1C1C")
-        self.window.resizable(False, False)
+        self.window.resizable(True, True)
 
         # --- UI: Tree Wrapper ---
         self.main_frame = tk.Frame(
@@ -813,9 +837,9 @@ class NameSelectionWindow:
         # self.master.withdraw() # We withdraw in __main__
         self.window = tk.Toplevel(master)
         self.window.title("Character Creation")
-        self.window.geometry("380x300")
+        center_window(self.window, 380, 300)
         self.window.configure(bg="#1C1C1C")
-        self.window.resizable(False, False)
+        self.window.resizable(True, True)
 
         self.window.protocol("WM_DELETE_WINDOW", self.on_close)
         self.window.grab_set()
@@ -938,6 +962,7 @@ class RPGGame:
     def __init__(self, root, gender="boy", player_name="Hero", difficulty="Medium"):
         self.root = root
         self.root.title("Memory Lane RPG")
+        center_window(self.root)
         self.root.configure(bg="#1C1C1C")
 
         self.gender = gender
@@ -2025,7 +2050,7 @@ class RPGGame:
 
         self.minigame_window = tk.Toplevel(self.root)
         self.minigame_window.title("Typomancer Challenge")
-        self.minigame_window.geometry("450x250")
+        center_window(self.minigame_window, 450, 250)
         self.minigame_window.configure(bg="#1C1C1C")
         self.minigame_window.protocol("WM_DELETE_WINDOW", self.end_minigame)
         self.minigame_window.attributes('-topmost', True)
