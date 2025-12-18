@@ -333,3 +333,9 @@ def fetch_leaderboard(difficulty=None):
     rows = cursor.fetchall()
     conn.close()
     return rows
+def reset_leaderboard():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM leaderboard")
+    conn.commit()
+    conn.close()
