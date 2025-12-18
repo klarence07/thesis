@@ -1095,6 +1095,7 @@ class RPGGame:
 
         self.player_pos = [0, 0]
         self.portal_pos = None
+        self.stage = 1
         self.level = 1
         self.xp = 0
         self.stats = {"HP": 0, "Wits": 0}
@@ -1164,6 +1165,7 @@ class RPGGame:
             "player_name": self.player_name,
             "gender": self.gender,
             "player_pos": self.player_pos,
+            "stage": self.stage,
             "level": self.level,
             "xp": self.xp,
             "health": self.health,
@@ -1199,6 +1201,7 @@ class RPGGame:
             self.player_name = game_state["player_name"]
             self.gender = game_state["gender"]
             self.player_pos = game_state["player_pos"]
+            self.stage = game_state.get("stage", 1)
             self.level = game_state["level"]
             self.xp = game_state.get("xp", 0)
             self.health = game_state["health"]
@@ -1234,6 +1237,7 @@ class RPGGame:
     def reset_game(self):
         """Resets the game to its initial state."""
         self.player_pos = [0, 0]
+        self.stage = 1
         self.level = 1
         self.xp = 0
         self.health = 100
@@ -1330,8 +1334,8 @@ class RPGGame:
 
     # --- NPC, Enemy and tiles ---
     def get_npc_count_for_level(self):
-        # Limit the number of questions (NPCs) per level to a maximum of 5
-        return min(self.level + 1, 5, len(self.topics) + 1)
+        # Limit the number of questions (NPCs) per stage to a maximum of 5
+        return min(self.stage + 1, 5, len(self.topics) + 1)
 
     def generate_npc_positions(self):
         self.npcs.clear()
@@ -1519,7 +1523,7 @@ class RPGGame:
         questions_answered = len(self.asked_sub_questions)
 
         self.status_label.config(
-            text=f"Level: {self.level} | HP: {self.health} | Questions: {questions_answered}/{self.victory_quota} | Topics Left: {topics_left}"
+            text=f"Stage: {self.stage} | Level: {self.level} | HP: {self.health} | Questions: {questions_answered}/{self.victory_quota} | Topics Left: {topics_left}"
         )
         self.loot_label.config(text="Loot: " + (", ".join(self.inventory) if self.inventory else "None"))
         potion_count = sum(1 for item in self.inventory if "Potion" in item)
@@ -1605,9 +1609,9 @@ class RPGGame:
                 LeaderboardWindow(self)
                 return
             else:
-                self.level += 1
-                messagebox.showinfo("Level Up!", f"You have entered the portal. Welcome to level {self.level}!")
-                self.portal_pos = None  # Reset portal for the new level
+                self.stage += 1
+                messagebox.showinfo("Stage Completed!", f"You have entered the portal. Welcome to Stage {self.stage}!")
+                self.portal_pos = None  # Reset portal for the new stage
                 self.player_pos = [0, 0]  # Reset player position
                 self.generate_static_tiles()
                 self.generate_npc_positions()
