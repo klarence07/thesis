@@ -1833,13 +1833,20 @@ class RPGGame:
 
     # --- Questions & loot ---
     def check_topic_complete(self, topic):
-        """Checks if all sub-questions for a main topic have been asked."""
+        """Checks if all sub-questions for a main topic have been asked (respecting difficulty)."""
         # Get the full list of question keys for this topic
         topic_groups = self._get_topic_groups()
         all_keys = topic_groups.get(topic, [topic]) # Defaults to just the topic key if no group is found
 
+        # Filter keys to only those of the current difficulty
+        relevant_keys = db_utils.filter_keys_by_difficulty(all_keys, self.difficulty)
+
+        # If no questions exist for this difficulty, consider it complete
+        if not relevant_keys:
+            return True
+
         # Check if all keys for this topic are in the asked set
-        return all(key in self.asked_sub_questions for key in all_keys)
+        return all(key in self.asked_sub_questions for key in relevant_keys)
 
     def _get_unasked_question_key(self, topic):
         """Randomly selects an unasked question key for the given topic, respecting difficulty."""
