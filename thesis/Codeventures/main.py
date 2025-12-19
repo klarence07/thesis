@@ -1191,6 +1191,8 @@ class RPGGame:
 
         self.root.after(1000, self.update_timer)
 
+        self.start_chase_loop()
+
         if AUDIO_ENABLED:
             self.play_background_music()
 
@@ -2006,6 +2008,94 @@ class RPGGame:
     def get_loot_table(self):
         # A 75% chance to get a silver key, 25% for a gold key
         return random.choices(["Silver Key", "Gold Key"], weights=[0.75, 0.25], k=1)
+
+    # --- Chase Mechanic ---
+    def start_chase_loop(self):
+        self.check_chase()
+
+    def check_chase(self):
+        if self.game_state == "exploration":
+            self.move_entities_towards_player()
+        self.root.after(800, self.check_chase)
+
+    def move_entities_towards_player(self):
+        player_x, player_y = self.player_pos
+        movers = []
+        for pos, topic in self.npcs.items():
+            movers.append((pos, "npc", topic))
+        for pos, enemy in self.enemies.items():
+            movers.append((pos, "enemy", enemy))
+
+        occupied = set(self.tiles.keys()) | set(self.chests.keys()) | set(self.npcs.keys()) | set(
+            self.enemies.keys()) | {tuple(self.player_pos)}
+
+        moves_to_execute = []
+        events_to_trigger = []
+
+        # Sort movers by distance to player
+        movers.sort(key=lambda m: abs(m[0][0] - player_x) + abs(m[0][1] - player_y))
+
+        for pos, entity_type, data in movers:
+            x, y = pos
+            dist = abs(x - player_x) + abs(y - player_y)
+
+            if dist <= 2:
+                dx = player_x - x
+                dy = player_y - y
+
+                candidates = []
+                if abs(dx) >= abs(dy):
+                    candidates.append((x + (1 if dx > 0 else -1), y))
+                    candidates.append((x, y + (1 if dy > 0 else -1)))
+                else:
+                    candidates.append((x, y + (1 if dy > 0 else -1)))
+                    candidates.append((x + (1 if dx > 0 else -1), y))
+
+                target = None
+                for cx, cy in candidates:
+                    if (cx, cy) == (player_x, player_y):
+                        events_to_trigger.append((entity_type, pos))
+                        target = None
+                        break
+
+                    if 0 <= cx < MAP_WIDTH and 0 <= cy < MAP_HEIGHT:
+                        if (cx, cy) not in occupied:
+                            target = (cx, cy)
+                            break
+
+                if target:
+                    moves_to_execute.append((pos, target, entity_type, data))
+                    occupied.add(target)
+                    if pos in occupied:
+                        occupied.remove(pos)
+
+        if moves_to_execute:
+            for old_pos, new_pos, entity_type, data in moves_to_execute:
+                if entity_type == "npc":
+                    if old_pos in self.npcs:
+                        del self.npcs[old_pos]
+                        self.npcs[new_pos] = data
+                elif entity_type == "enemy":
+                    if old_pos in self.enemies:
+                        del self.enemies[old_pos]
+                        self.enemies[new_pos] = data
+            self.draw_map()
+
+        if events_to_trigger:
+            # Only trigger one event
+            etype, pos = events_to_trigger[0]
+            if etype == "npc":
+                if pos in self.npcs:
+                    self.ask_question(self.npcs[pos])
+            elif etype == "enemy":
+                if pos in self.enemies:
+                    enemy = self.enemies[pos]
+                    if enemy.name == "Typomancer":
+                        self.current_enemy_pos = pos
+                        self.start_typomancer_minigame(pos)
+                    else:
+                        self.current_enemy_pos = pos
+                        CombatMiniGameWindow(self, pos)
 
     # --- Typomancer Minigame ---
     def start_typomancer_minigame(self, npc_pos):
