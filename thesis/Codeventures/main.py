@@ -705,6 +705,7 @@ class InventoryWindow:
         elif "Goblin Axe" in item_name: filename = "goblin_axe.png"
         elif "Slime Goo" in item_name: filename = "slime_goo.png"
         elif "Potion" in item_name: filename = "potion.png"
+        elif "Slipperoo!" in item_name: filename = "slime_goo.png"  # Placeholder using Slime Goo image
 
         if filename:
             path = os.path.join(base_dir, filename)
@@ -728,20 +729,70 @@ class InventoryWindow:
 
     def get_item_icon_config(self, item_name):
         # Returns item-specific text, color, and description
-        if "Key" in item_name:
-            return "KEY", "#FFD700", "Use to open chests."
+        if "Silver Key" in item_name:
+            desc = (
+                "A standard key.\n"
+                "Drop Rate: Common (75%)\n"
+                "Obtain: Questions, Typomancer\n"
+                "Uses: Opens Silver Chests (XP, Slime Goo)."
+            )
+            return "KEY", "#FFD700", desc
+        if "Gold Key" in item_name:
+            desc = (
+                "A rare, shiny key.\n"
+                "Drop Rate: Rare (25%)\n"
+                "Obtain: Questions, Typomancer\n"
+                "Uses: Opens Gold Chests (XP, Rare Items)."
+            )
+            return "KEY", "#FFD700", desc
         if item_name == "Sword":
-            return "SWD", "#FF3366", "Allows instant enemy defeat."
+            desc = (
+                "A sharp blade that gleams with power.\n"
+                "Drop Rate: 50% from Gold Chests\n"
+                "Obtain: Gold Chests\n"
+                "Uses: Instantly defeat enemies on contact."
+            )
+            return "SWD", "#FF3366", desc
         if item_name == "Pickaxe":
-            return "PXE", "#33CCFF", "Use to break rocks."
+            desc = (
+                "A sturdy tool for mining.\n"
+                "Drop Rate: 50% from Gold Chests\n"
+                "Obtain: Gold Chests\n"
+                "Uses: Break Rocks to clear paths."
+            )
+            return "PXE", "#33CCFF", desc
         if item_name == "Goblin Axe":
-            return "AXE", "#00FFFF", "Use to chop down trees."
+            desc = (
+                "A crude but heavy axe.\n"
+                "Drop Rate: 100% from Goblin\n"
+                "Obtain: Defeat the Goblin\n"
+                "Uses: Chop down Trees."
+            )
+            return "AXE", "#00FFFF", desc
         if item_name == "Slime Goo":
-            return "GOO", "#33FF33", "Crafting material."
+            desc = (
+                "A sticky, green substance.\n"
+                "Drop Rate: 100% from Slimes\n"
+                "Obtain: Defeat Slimes, Silver Chests\n"
+                "Uses: Crafting material for Slipperoo!."
+            )
+            return "GOO", "#33FF33", desc
         if item_name == "Slipperoo!":
-            return "SLP", "#00FFFF", "Passive item. Walk safely over spikes."
+            desc = (
+                "Magical boots coated in slime.\n"
+                "Drop Rate: N/A (Crafted)\n"
+                "Obtain: Crafting (Requires 5 Slime Goo)\n"
+                "Uses: Walk safely over Spikes."
+            )
+            return "SLP", "#00FFFF", desc
         if "Potion" in item_name:
-            return "POT", "#FF3366", "Restores 50 HP."
+            desc = (
+                "A red liquid that smells like cherries.\n"
+                "Drop Rate: Rare Find\n"
+                "Obtain: Unknown\n"
+                "Uses: Restores 50 HP."
+            )
+            return "POT", "#FF3366", desc
         return "???", "gray", "Unknown item."
 
     def display_inventory_grid(self):
