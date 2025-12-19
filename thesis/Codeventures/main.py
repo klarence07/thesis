@@ -663,7 +663,7 @@ class InventoryWindow:
         self.game = game
         self.window = tk.Toplevel(game.root)
         self.window.title("Inventory")
-        self.window.geometry("450x450")
+        self.window.geometry("450x550")
         self.window.configure(bg="#1C1C1C")
         self.window.resizable(False, False)
 
@@ -694,6 +694,37 @@ class InventoryWindow:
 
         self.slot_buttons = []
         self.display_inventory_grid()
+
+    def get_image_path(self, item_name):
+        base_dir = get_base_path()
+        filename = None
+        if "Silver Key" in item_name: filename = "silver_key.png"
+        elif "Gold Key" in item_name: filename = "gold_key.png"
+        elif "Sword" in item_name: filename = "sword.png"
+        elif "Pickaxe" in item_name: filename = "pickaxe.png"
+        elif "Goblin Axe" in item_name: filename = "goblin_axe.png"
+        elif "Slime Goo" in item_name: filename = "slime_goo.png"
+        elif "Potion" in item_name: filename = "potion.png"
+
+        if filename:
+            path = os.path.join(base_dir, filename)
+            if os.path.exists(path):
+                return path
+            path = os.path.join(base_dir, "assets", filename)
+            if os.path.exists(path):
+                return path
+        return None
+
+    def load_item_image(self, item_name, size):
+        path = self.get_image_path(item_name)
+        if path:
+            try:
+                img = Image.open(path).resize(size, Image.LANCZOS)
+                return ImageTk.PhotoImage(img)
+            except Exception as e:
+                print(f"Error loading image for {item_name}: {e}")
+                return None
+        return None
 
     def get_item_icon_config(self, item_name):
         # Returns item-specific text, color, and description
@@ -738,11 +769,28 @@ class InventoryWindow:
                     if count == 1 and item_name not in ["Silver Key", "Gold Key", "Slime Goo", "Potion"]:
                         btn_text = item_name.split()[0][:3].upper() if " " in item_name else item_name[:3].upper()
 
-                    btn = tk.Button(
-                        slot_container, text=btn_text, bg="#1C1C1C", fg=item_color, font=btn_font,
-                        width=5, height=2, compound="center",
-                        command=lambda name=item_name: self.show_item_actions(name)
-                    )
+                    img = self.load_item_image(item_name, (40, 40))
+
+                    btn_kwargs = {
+                        "text": btn_text if not img else "",
+                        "bg": "#1C1C1C",
+                        "fg": item_color,
+                        "font": btn_font,
+                        "compound": "center",
+                        "command": lambda name=item_name: self.show_item_actions(name)
+                    }
+
+                    if img:
+                        btn_kwargs["image"] = img
+                    else:
+                        btn_kwargs["width"] = 5
+                        btn_kwargs["height"] = 2
+
+                    btn = tk.Button(slot_container, **btn_kwargs)
+                    if img:
+                        btn.image = img
+                        btn.config(width=44, height=44)
+
                     btn.pack(padx=2, pady=2)
                     if count > 1 or "Key" in item_name or "Goo" in item_name:
                         tk.Label(btn, text=f"x{count}", bg="#1C1C1C", fg="#33FF33", font=("Consolas", 7, "bold")).place(relx=1.0, rely=1.0, anchor="se")
@@ -758,6 +806,12 @@ class InventoryWindow:
 
         _, item_color, item_desc = self.get_item_icon_config(item_name)
         count = self.item_counts[item_name]
+
+        img = self.load_item_image(item_name, (100, 100))
+        if img:
+            lbl = tk.Label(self.action_frame, image=img, bg="#8B4513")
+            lbl.image = img
+            lbl.pack(pady=5)
 
         tk.Label(self.action_frame, text=f"Item: {item_name} (x{count})", font=("Consolas", 12, "bold"), bg="#8B4513", fg="#33FF33").pack(pady=5)
         tk.Label(self.action_frame, text=item_desc, font=("Consolas", 10), bg="#8B4513", fg="#00FFFF", wraplength=400).pack()
