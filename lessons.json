@@ -1,0 +1,106 @@
+{
+  "Python": {
+    "Control Flow": {
+      "Easy": [
+        {
+          "title": "If Statement",
+          "instruction": "Print 'Even' if 4 is even.",
+          "check": "lambda output: 'Even' in output"
+        },
+        {
+          "title": "If Else",
+          "instruction": "Check if 5 is even, else print 'Odd'.",
+          "check": "lambda output: 'Odd' in output"
+        }
+      ],
+      "Intermediate": [
+        {
+          "title": "Nested If",
+          "instruction": "Check if a number is positive and even (use if-inside-if).",
+          "check": "lambda output: 'Positive and Even' in output"
+        },
+        {
+          "title": "Multiple Conditions",
+          "instruction": "Print 'Match' if a number is between 5 and 10.",
+          "check": "lambda output: 'Match' in output"
+        }
+      ],
+      "Hard": [
+        {
+          "title": "Complex Logic",
+          "instruction": "Write a program that prints the max of 3 numbers.",
+          "check": "lambda output: output.strip() == '9'"
+        }
+      ]
+    },
+    "Loops": {
+      "Easy": [
+        {
+          "title": "For Loop",
+          "instruction": "Use a for loop to print numbers from 1 to 3.",
+          "check": "lambda output: '1' in output and '2' in output and '3' in output"
+        }
+      ],
+      "Intermediate": [
+        {
+          "title": "While Loop",
+          "instruction": "Use a while loop to print numbers from 5 down to 1.",
+          "check": "lambda output: '5' in output and '1' in output and '0' not in output"
+        }
+      ],
+      "Hard": [
+        {
+          "title": "Nested Loops",
+          "instruction": "Use nested loops to print a 2x2 grid of asterisks.",
+          "check": "lambda output: output.count('*') == 4"
+        }
+      ]
+    },
+    "Functions": {
+      "Easy": [
+        {
+          "title": "Basic Function",
+          "instruction": "Define a function named 'greet' that prints 'Hello!'",
+          "check": "lambda output: 'Hello!' in output"
+        }
+      ],
+      "Intermediate": [
+        {
+          "title": "Function with Parameter",
+          "instruction": "Define a function named 'say_hi' that takes a name and prints 'Hi, [name]!'.",
+          "check": "lambda output: 'Hi' in output"
+        }
+      ],
+      "Hard": [
+        {
+          "title": "Function with Return Value",
+          "instruction": "Define a function 'add_numbers' that takes two numbers and returns their sum.",
+          "check": "lambda output: output.strip() == '7'"
+        }
+      ]
+    },
+    "Lists": {
+      "Easy": [
+        {
+          "title": "List Creation",
+          "instruction": "Create a list with the numbers 1, 2, 3 and print the third item.",
+          "check": "lambda output: output.strip() == '3'"
+        }
+      ],
+      "Intermediate": [
+        {
+          "title": "List Manipulation",
+          "instruction": "Create a list [1, 2, 3]. Add the number 4 and print the list.",
+          "check": "lambda output: '1' in output and '2' in output and '3' in output and '4' in output"
+        }
+      ],
+      "Hard": [
+        {
+          "title": "List Iteration",
+          "instruction": "Use a for loop to print all items in a list [10, 20, 30].",
+          "check": "lambda output: '10' in output and '20' in output and '30' in output"
+        }
+      ]
+    }
+  }
+}
