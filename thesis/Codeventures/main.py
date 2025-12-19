@@ -194,140 +194,124 @@ class Enemy:
         self.loot = loot
 
 
-class CombatSystem:
-    def __init__(self, game):
+class CombatMiniGameWindow:
+    def __init__(self, game, enemy_pos):
         self.game = game
+        self.enemy_pos_map = enemy_pos
+        self.enemy_data = self.game.enemies[enemy_pos]
+        self.game.game_state = "combat_minigame"
+        self.game.unlocked_encyclopedia_entries.add(self.enemy_data.name)
+
+        self.window = tk.Toplevel(self.game.root)
+        self.window.title(f"Combat: {self.enemy_data.name}")
+        self.window.geometry("450x500")
+        self.window.configure(bg="#1C1C1C")
+        # Prevent closing via X to ensure combat is resolved
+        self.window.protocol("WM_DELETE_WINDOW", lambda: None)
+        self.window.attributes('-topmost', True)
+        self.window.grab_set()
+
+        # UI
+        self.main_frame = tk.Frame(self.window, bg="#8B4513", padx=10, pady=10, relief="ridge", borderwidth=4)
+        self.main_frame.pack(fill="both", expand=True, padx=10, pady=10)
+
+        self.info_label = tk.Label(self.main_frame, text=f"Outrun the {self.enemy_data.name}!", font=("Consolas", 14, "bold"), bg="#8B4513", fg="#00FFFF")
+        self.info_label.pack(pady=5)
+
+        self.status_label = tk.Label(self.main_frame, text="Dodges: 0/3", font=("Consolas", 12), bg="#8B4513", fg="#33FF33")
+        self.status_label.pack(pady=5)
+
+        self.canvas = tk.Canvas(self.main_frame, width=400, height=400, bg="#222222", highlightthickness=2, highlightbackground="#333333")
+        self.canvas.pack()
+
+        self.grid_size = 8
+        self.cell_size = 50
+        self.player_local_pos = [0, 0]
+        self.enemy_local_pos = [7, 7]
         self.player_dodges = 0
         self.max_dodges = 3
-        self.enemy_pos = None
 
-    def start_combat(self, enemy_pos):
-        self.game.game_state = "combat"
-        self.game.canvas.delete("all")
-        enemy_data = self.game.enemies[enemy_pos]
-        self.game.unlocked_encyclopedia_entries.add(enemy_data.name)
-        self.game.info_label.config(text=f"A {enemy_data.name} appeared!")
-        self.game.status_label.config(text="Dodge its attacks! Use WASD to move.")
-        self.enemy_pos = list(enemy_pos)
-        self.player_dodges = 0
-        self.game.root.after(1000, self.enemy_cutscene)
+        self.draw_minigame()
 
-    def enemy_cutscene(self):
-        # A simple "cutscene" where the enemy moves
-        if self.game.game_state != "combat":
-            return
+        self.window.bind("<Key>", self.on_key)
+        self.window.focus_force()
 
-        self.game.canvas.delete("all")
-        self.game.canvas.create_image(
-            self.game.player_pos[0] * TILE_SIZE + TILE_SIZE // 2,
-            self.game.player_pos[1] * TILE_SIZE + TILE_SIZE // 2,
-            anchor="center", image=self.game.player_img
-        )
+        self.game.root.after(1000, self.enemy_move_step)
 
-        # Check if the enemy still exists at its original position
-        enemy_data = self.game.enemies.get(tuple(self.game.current_enemy_pos))
-        if not enemy_data:
-            # Enemy not found, end combat gracefully
-            self.end_combat("win")
-            return
+    def draw_minigame(self):
+        self.canvas.delete("all")
 
-        enemy_img = self.game.enemy_img if enemy_data.name == "Slime" else self.game.goblin_img
+        # Draw Player
+        px, py = self.player_local_pos
+        self.canvas.create_image(px * self.cell_size + 25, py * self.cell_size + 25, image=self.game.player_img)
 
-        self.game.canvas.create_image(
-            self.enemy_pos[0] * TILE_SIZE + TILE_SIZE // 2,
-            self.enemy_pos[1] * TILE_SIZE + TILE_SIZE // 2,
-            anchor="center", image=enemy_img
-        )
+        # Draw Enemy
+        ex, ey = self.enemy_local_pos
+        enemy_img = self.game.enemy_img if self.enemy_data.name == "Slime" else self.game.goblin_img
+        self.canvas.create_image(ex * self.cell_size + 25, ey * self.cell_size + 25, image=enemy_img)
 
-        self.enemy_pos[0] = self.game.player_pos[0]
-        self.game.root.after(500, self.enemy_attack)
+    def on_key(self, event):
+        key = event.keysym.lower()
+        dx, dy = 0, 0
+        if key in ("up", "w"): dy = -1
+        elif key in ("down", "s"): dy = 1
+        elif key in ("left", "a"): dx = -1
+        elif key in ("right", "d"): dx = 1
 
-    def enemy_attack(self):
-        """Handles the enemy's attack action."""
-        if self.game.game_state != "combat":
-            return
+        nx, ny = self.player_local_pos[0] + dx, self.player_local_pos[1] + dy
+        if 0 <= nx < self.grid_size and 0 <= ny < self.grid_size:
+            # Check if walking into enemy
+            if [nx, ny] == self.enemy_local_pos:
+                self.game_over_combat("caught")
+            else:
+                self.player_local_pos = [nx, ny]
+                self.draw_minigame()
 
-        # Get the enemy data using the original position where combat started.
-        enemy_data = self.game.enemies.get(tuple(self.game.current_enemy_pos))
+    def enemy_move_step(self):
+        if not self.window.winfo_exists(): return
 
-        # If the enemy data is not found, it means the enemy was already removed
-        # (e.g., in a previous step). We should end combat safely.
-        if not enemy_data:
-            self.end_combat("win")
-            return
-
-        # Clear the canvas and redraw the player
-        self.game.canvas.delete("all")
-        self.game.canvas.create_image(
-            self.game.player_pos[0] * TILE_SIZE + TILE_SIZE // 2,
-            self.game.player_pos[1] * TILE_SIZE + TILE_SIZE // 2,
-            anchor="center", image=self.game.player_img
-        )
-
-        # Determine the correct image for the enemy
-        enemy_img = self.game.enemy_img if enemy_data.name == "Slime" else self.game.goblin_img
-
-        # Redraw the enemy at its current mini-game position
-        self.game.canvas.create_image(
-            self.enemy_pos[0] * TILE_SIZE + TILE_SIZE // 2,
-            self.enemy_pos[1] * TILE_SIZE + TILE_SIZE // 2,
-            anchor="center", image=enemy_img
-        )
-
-        # Move the enemy closer to the player
-        dx = self.game.player_pos[0] - self.enemy_pos[0]
-        dy = self.game.player_pos[1] - self.enemy_pos[1]
+        # Move towards player
+        dx = self.player_local_pos[0] - self.enemy_local_pos[0]
+        dy = self.player_local_pos[1] - self.enemy_local_pos[1]
 
         if dx != 0:
-            self.enemy_pos[0] += dx // abs(dx)
-        if dy != 0:
-            self.enemy_pos[1] += dy // abs(dy)
+            self.enemy_local_pos[0] += 1 if dx > 0 else -1
+        elif dy != 0:
+            self.enemy_local_pos[1] += 1 if dy > 0 else -1
 
-        # Check if the enemy has caught the player
-        if self.enemy_pos == self.game.player_pos:
-            self.game.take_damage(enemy_data.damage, enemy_data.name)
-            self.end_combat("loss")
+        self.draw_minigame()
+
+        if self.enemy_local_pos == self.player_local_pos:
+            self.game_over_combat("caught")
         else:
             self.player_dodges += 1
-            if self.player_dodges >= self.max_dodges:
-                self.end_combat("win")
-            else:
-                # Slower for goblin, faster for slime
-                delay = 800 if enemy_data.name == "Goblin" else 500
-                self.game.root.after(delay, self.enemy_attack)
+            self.status_label.config(text=f"Dodges: {self.player_dodges}/{self.max_dodges}")
 
-    def end_combat(self, result):
+            if self.player_dodges >= self.max_dodges:
+                self.game_over_combat("win")
+            else:
+                delay = 800 if self.enemy_data.name == "Goblin" else 500
+                self.game.root.after(delay, self.enemy_move_step)
+
+    def game_over_combat(self, result):
+        self.window.destroy()
         self.game.game_state = "exploration"
 
-        enemy_pos = tuple(self.game.current_enemy_pos)
-        enemy_defeated = self.game.enemies.pop(enemy_pos, None)
-
-        if not enemy_defeated:
-            # This case handles situations where the enemy was already removed
-            # but combat was still running.
-            self.game.current_enemy = None
-            self.game.current_enemy_pos = None
-            self.game.draw_map()
-            self.game.update_status()
-            return
-
         if result == "win":
-            self.game.info_label.config(text=f"You successfully outran the {enemy_defeated.name}!")
-            self.game.add_xp(enemy_defeated.xp_reward)
-            self.game.add_loot(enemy_defeated.loot)
+            self.game.info_label.config(text=f"You successfully outran the {self.enemy_data.name}!")
+            self.game.add_xp(self.enemy_data.xp_reward)
+            self.game.add_loot(self.enemy_data.loot)
+            if self.enemy_pos_map in self.game.enemies:
+                del self.game.enemies[self.enemy_pos_map]
             if AUDIO_ENABLED:
                 self.game.play_sound("victory.wav")
-        else:  # "loss"
-            # This is specifically for the goblin. If you lose, it's an instant Game Over.
-            self.game.info_label.config(text=f"The {enemy_defeated.name} caught you! You were defeated...")
-            if enemy_defeated.name == "Goblin":
-                self.game.take_damage(self.game.health, "goblin-caught")
-            else:
-                # For slimes, you just take damage and the game continues
-                pass
+        else:
+             self.game.info_label.config(text=f"The {self.enemy_data.name} caught you!")
+             if self.enemy_data.name == "Goblin":
+                 self.game.take_damage(self.game.health, "goblin-caught")
+             else:
+                 self.game.take_damage(self.enemy_data.damage, "Slime")
 
-        self.game.current_enemy = None
-        self.game.current_enemy_pos = None
         self.game.draw_map()
         self.game.update_status()
 
@@ -576,10 +560,13 @@ class CraftingWindow:
 class LeaderboardWindow:
     def __init__(self, game):
         self.game = game
+        self.previous_state = self.game.game_state
+        self.game.game_state = "menu"
         self.window = tk.Toplevel(game.root)
         self.window.title("Leaderboard")
         self.window.geometry("500x400")
         self.window.configure(bg="#1C1C1C")
+        self.window.protocol("WM_DELETE_WINDOW", self.on_close)
 
         # --- UI: Wrapper ---
         self.main_frame = tk.Frame(
@@ -661,6 +648,10 @@ class LeaderboardWindow:
             tk.Label(row_frame, text=f"{row['name']}", width=15, bg="#2B2B2B", fg=fg_color, font=("Consolas", 10)).pack(side="left")
             tk.Label(row_frame, text=f"{row['score']}", width=10, bg="#2B2B2B", fg=fg_color, font=("Consolas", 10)).pack(side="left")
             tk.Label(row_frame, text=f"{row['time_taken']}", width=10, bg="#2B2B2B", fg=fg_color, font=("Consolas", 10)).pack(side="left")
+
+    def on_close(self):
+        self.game.game_state = self.previous_state
+        self.window.destroy()
 
     def close_and_quit(self):
         self.window.destroy()
@@ -1130,7 +1121,6 @@ class RPGGame:
         self.has_goblin_spawned = False
         self.current_enemy = None
         self.current_enemy_pos = None
-        self.combat_system = CombatSystem(self)
 
         self.minigame_words = []
         self.full_word_string = ""
@@ -1567,25 +1557,6 @@ class RPGGame:
                 self.move(-1, 0)
             elif key in ("right", "d"):
                 self.move(1, 0)
-        elif self.game_state == "combat":
-            self.player_dodge(key)
-
-    def player_dodge(self, key):
-        dx, dy = 0, 0
-        if key in ("up", "w"):
-            dy = -1
-        elif key in ("down", "s"):
-            dy = 1
-        elif key in ("left", "a"):
-            dx = -1
-        elif key in ("right", "d"):
-            dx = 1
-
-        new_x = self.player_pos[0] + dx
-        new_y = self.player_pos[1] + dy
-
-        if 0 <= new_x < MAP_WIDTH and 0 <= new_y < MAP_HEIGHT:
-            self.player_pos = [new_x, new_y]
 
     # --- Player movement ---
     def move(self, dx, dy):
@@ -1641,7 +1612,7 @@ class RPGGame:
         # Handle other enemy encounters
         if pos in self.enemies:
             self.current_enemy_pos = pos
-            self.combat_system.start_combat(pos)
+            CombatMiniGameWindow(self, pos)
             return
 
         # Handle chests
