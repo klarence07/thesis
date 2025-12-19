@@ -1079,6 +1079,7 @@ class RPGGame:
 
         self.grass_img = self.player_img = self.npc_img = self.enemy_img = self.goblin_img = self.typo_img = None
         self.silver_chest_img = self.gold_chest_img = self.pickaxe_img = None
+        self.sword_img = self.goblin_axe_img = self.slime_goo_img = self.silver_key_img = self.gold_key_img = None
         self.portal_img = None
         self.image_refs = []
 
@@ -1305,6 +1306,12 @@ class RPGGame:
         self.gold_chest_img = load_resized_image(os.path.join(base_dir, "gold_chest.png"))
         self.pickaxe_img = load_resized_image(os.path.join(base_dir, "pickaxe.png"))
         self.portal_img = load_resized_image(os.path.join(base_dir, "portal.png"))
+
+        self.sword_img = load_resized_image(os.path.join(base_dir, "sword.png"))
+        self.goblin_axe_img = load_resized_image(os.path.join(base_dir, "goblin_axe.png"))
+        self.slime_goo_img = load_resized_image(os.path.join(base_dir, "slime_goo.png"))
+        self.silver_key_img = load_resized_image(os.path.join(base_dir, "silver_key.png"))
+        self.gold_key_img = load_resized_image(os.path.join(base_dir, "gold_key.png"))
 
         if self.gender == "girl" and os.path.exists(os.path.join(base_dir, "girl.png")):
             self.player_img = load_resized_image(os.path.join(base_dir, "girl.png"))
