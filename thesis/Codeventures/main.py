@@ -296,6 +296,7 @@ class CombatMiniGameWindow:
     def game_over_combat(self, result):
         self.window.destroy()
         self.game.game_state = "exploration"
+        self.game.chase_cooldown_until = time.time() + 3.0
 
         if result == "win":
             self.game.info_label.config(text=f"You successfully outran the {self.enemy_data.name}!")
@@ -1173,6 +1174,7 @@ class RPGGame:
         self.asked_sub_questions = set()
 
         self.game_state = "exploration"
+        self.chase_cooldown_until = 0
         self.has_goblin_spawned = False
         self.current_enemy = None
         self.current_enemy_pos = None
@@ -1881,6 +1883,7 @@ class RPGGame:
 
         # Reset game state back to 'exploration' regardless of outcome
         self.game_state = "exploration"
+        self.chase_cooldown_until = time.time() + 3.0
 
         if response and (response.strip().lower() == answer.lower() or response.strip().lower() == "admin"):
             # 3. Mark the specific question as asked.
@@ -2014,7 +2017,7 @@ class RPGGame:
         self.check_chase()
 
     def check_chase(self):
-        if self.game_state == "exploration":
+        if self.game_state == "exploration" and time.time() > self.chase_cooldown_until:
             self.move_entities_towards_player()
         self.root.after(800, self.check_chase)
 
@@ -2276,6 +2279,7 @@ class RPGGame:
             del self.enemies[self.minigame_npc_pos]
 
         self.game_state = "exploration"
+        self.chase_cooldown_until = time.time() + 3.0
         self.draw_map()
         self.update_status()
 
