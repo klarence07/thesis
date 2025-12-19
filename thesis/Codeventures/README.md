@@ -6,7 +6,7 @@ Codeventures is an RPG-style coding learning game built with Python and Tkinter.
 
 ### Prerequisites
 
-*   Python 3.x installed on your system.
+*   Python 3.6 or higher installed on your system.
 *   `pip` (Python package manager).
 
 ### Installation
@@ -16,7 +16,12 @@ Codeventures is an RPG-style coding learning game built with Python and Tkinter.
     cd thesis/Codeventures
     ```
 
-2.  Install the required dependencies:
+2.  Install the game and its dependencies:
+    ```bash
+    pip install .
+    ```
+
+    Alternatively, you can install the dependencies manually:
     ```bash
     pip install -r requirements.txt
     ```
@@ -27,6 +32,11 @@ To play the game from the source code, run the `main.py` script:
 
 ```bash
 python main.py
+```
+
+If you installed via `pip install .`, you can also run the game using the command:
+```bash
+codeventures
 ```
 
 ## Building the Standalone Application

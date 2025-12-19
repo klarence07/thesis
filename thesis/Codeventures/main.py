@@ -2138,7 +2138,7 @@ class RPGGame:
         self.update_status()
 
 
-if __name__ == "__main__":
+def main_entry_point():
     # Initialize the database
     db_utils.init_db()
 
@@ -2153,3 +2153,6 @@ if __name__ == "__main__":
 
     # Start the main application loop
     root.mainloop()
+
+if __name__ == "__main__":
+    main_entry_point()
