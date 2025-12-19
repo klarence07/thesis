@@ -7,6 +7,9 @@ import time
 import json
 import db_utils
 import sys
+from entities import Enemy
+from gui import InventoryWindow, LeaderboardWindow, CombatMiniGameWindow, EncycodepediaWindow, StatsSystem, CraftingWindow, NameSelectionWindow
+from assets import get_base_path, load_all_images, TILE_SIZE
 
 # Handle Audio (Prevent crash if not on Windows)
 try:
@@ -15,23 +18,10 @@ try:
 except ImportError:
     AUDIO_ENABLED = False
 
-# Constants for Admin Credentials
-ADMIN_USERNAME = "admin"
-ADMIN_PASSWORD = "admin123"
-
-TILE_SIZE = 50
 MAP_WIDTH = 15
 MAP_HEIGHT = 12
 HAZARDS = ["spikes", "fire"]
 
-def get_base_path():
-    """ Get absolute path to resource, works for dev and for PyInstaller """
-    if getattr(sys, 'frozen', False):
-        # PyInstaller creates a temp folder and stores path in _MEIPASS
-        base_path = sys._MEIPASS
-    else:
-        base_path = os.path.dirname(os.path.abspath(__file__))
-    return base_path
 
 def get_user_data_path():
     """ Get path for persistent data (savegame, db) """
@@ -41,942 +31,6 @@ def get_user_data_path():
     else:
         # If running from source, use the script directory
         return os.path.dirname(os.path.abspath(__file__))
-
-
-def create_placeholder_images(base_dir):
-    """Create placeholder images if not found, including stride simulation."""
-    try:
-        # Attempt to load a Consolas-like monospace font for the neon theme
-        font = ImageFont.truetype("consolas.ttf", 28)
-    except:
-        font = ImageFont.load_default()
-
-    # Grass
-    grass = Image.new("RGBA", (TILE_SIZE, TILE_SIZE), (34, 139, 34, 255))
-    draw = ImageDraw.Draw(grass)
-    # New speckled grass texture
-    for _ in range(100):
-        x, y = random.randint(0, TILE_SIZE), random.randint(0, TILE_SIZE)
-        draw.point((x, y), fill=(0, 100, 0, 180))
-    grass.save(os.path.join(base_dir, "grass.png"))
-
-    # Player (Simulating Stride/Movement Frame - Red/Orange)
-    player = Image.new("RGBA", (TILE_SIZE, TILE_SIZE), (0, 0, 0, 0)) # Transparent BG
-    draw = ImageDraw.Draw(player)
-
-    # Body (Dark Red/Orange theme based on previous context)
-    body_color = (200, 50, 0, 255)
-    leg_color = (150, 30, 0, 255)
-
-    draw.rectangle([5, 5, TILE_SIZE - 5, TILE_SIZE - 5], fill=body_color)
-
-    # Stride Simulation: One leg forward, one leg back
-    draw.line([(TILE_SIZE // 2 - 5, TILE_SIZE - 10), (TILE_SIZE // 2 - 15, TILE_SIZE - 5)], fill=leg_color, width=3) # Forward Leg
-    draw.line([(TILE_SIZE // 2 + 5, TILE_SIZE - 10), (TILE_SIZE // 2 + 10, TILE_SIZE - 15)], fill=leg_color, width=3) # Back Leg
-
-    # Letter 'P'
-    bbox = draw.textbbox((0, 0), "P", font=font)
-    w = bbox[2] - bbox[0]
-    h = bbox[3] - bbox[1]
-
-    draw.text(((TILE_SIZE - w) / 2, (TILE_SIZE - h) / 2 - 2), "P", font=font, fill="white")
-    player.save(os.path.join(base_dir, "player.png"))
-
-    # NPC (Simulating Stride/Movement Frame - Blue)
-    npc = Image.new("RGBA", (TILE_SIZE, TILE_SIZE), (0, 0, 0, 0))  # Transparent background
-    draw = ImageDraw.Draw(npc)
-
-    # Body (Dark Blue theme)
-    body_color_npc = (0, 0, 200, 255)
-    leg_color_npc = (0, 0, 150, 255)
-
-    draw.ellipse([5, 5, TILE_SIZE - 5, TILE_SIZE - 5], fill=body_color_npc)
-
-    # Stride Simulation: One leg forward, one leg back
-    draw.line([(TILE_SIZE // 2 - 5, TILE_SIZE - 10), (TILE_SIZE // 2 - 15, TILE_SIZE - 5)], fill=leg_color_npc, width=3) # Forward Leg
-    draw.line([(TILE_SIZE // 2 + 5, TILE_SIZE - 10), (TILE_SIZE // 2 + 10, TILE_SIZE - 15)], fill=leg_color_npc, width=3) # Back Leg
-
-    # Letter 'N'
-    bbox = draw.textbbox((0, 0), "N", font=font)
-    w = bbox[2] - bbox[0]
-    h = bbox[3] - bbox[1]
-
-    draw.text(((TILE_SIZE - w) / 2, (TILE_SIZE - h) / 2 - 2), "N", font=font, fill="white")
-    npc.save(os.path.join(base_dir, "Npc.png"))
-
-    # Enemy
-    enemy = Image.new("RGBA", (TILE_SIZE, TILE_SIZE), (128, 0, 128, 255))  # Purple
-    draw = ImageDraw.Draw(enemy)
-    draw.polygon([(TILE_SIZE / 2, 5), (TILE_SIZE - 5, TILE_SIZE - 5), (5, TILE_SIZE - 5)], fill=(100, 0, 100, 255))
-
-    bbox = draw.textbbox((0, 0), "E", font=font)
-    w = bbox[2] - bbox[0]
-    h = bbox[3] - bbox[1]
-
-    draw.text(((TILE_SIZE - w) / 2, (TILE_SIZE - h) / 2), "E", font=font, fill="white")
-    enemy.save(os.path.join(base_dir, "enemy.png"))
-
-    # Goblin
-    goblin = Image.new("RGBA", (TILE_SIZE, TILE_SIZE), (0, 128, 0, 255))  # Green
-    draw = ImageDraw.Draw(goblin)
-    draw.polygon([(TILE_SIZE / 2, 5), (TILE_SIZE - 5, TILE_SIZE - 5), (5, TILE_SIZE - 5)], fill=(0, 100, 0, 255))
-
-    bbox = draw.textbbox((0, 0), "G", font=font)
-    w = bbox[2] - bbox[0]
-    h = bbox[3] - bbox[1]
-
-    draw.text(((TILE_SIZE - w) / 2, (TILE_SIZE - h) / 2), "G", font=font, fill="white")
-    goblin.save(os.path.join(base_dir, "goblin.png"))
-
-    # Typomancer
-    typo = Image.new("RGBA", (TILE_SIZE, TILE_SIZE), (0, 100, 200, 255))  # Blue
-    draw = ImageDraw.Draw(typo)
-    draw.ellipse([5, 5, TILE_SIZE - 5, TILE_SIZE - 5], fill=(0, 75, 150, 255))
-
-    bbox = draw.textbbox((0, 0), "T", font=font)
-    w = bbox[2] - bbox[0]
-    h = bbox[3] - bbox[1]
-
-    draw.text(((TILE_SIZE - w) / 2, (TILE_SIZE - h) / 2), "T", font=font, fill="white")
-    typo.save(os.path.join(base_dir, "typomancer.png"))
-
-    # Silver Chest
-    silver_chest = Image.new("RGBA", (TILE_SIZE, TILE_SIZE), (192, 192, 192, 255))
-    draw = ImageDraw.Draw(silver_chest)
-    draw.rectangle([5, 15, TILE_SIZE - 5, TILE_SIZE - 5], fill=(160, 160, 160, 255))
-    draw.rectangle([10, 5, TILE_SIZE - 10, 20], fill=(220, 220, 220, 255))
-    bbox = draw.textbbox((0, 0), "SC", font=font)
-    w = bbox[2] - bbox[0]
-    h = bbox[3] - bbox[1]
-    draw.text(((TILE_SIZE - w) / 2, (TILE_SIZE - h) / 2), "SC", font=font, fill="black")
-    silver_chest.save(os.path.join(base_dir, "silver_chest.png"))
-
-    # Gold Chest
-    gold_chest = Image.new("RGBA", (TILE_SIZE, TILE_SIZE), (255, 215, 0, 255))
-    draw = ImageDraw.Draw(gold_chest)
-    draw.rectangle([5, 15, TILE_SIZE - 5, TILE_SIZE - 5], fill=(218, 165, 32, 255))
-    draw.rectangle([10, 5, TILE_SIZE - 10, 20], fill=(255, 230, 0, 255))
-    bbox = draw.textbbox((0, 0), "GC", font=font)
-    w = bbox[2] - bbox[0]
-    h = bbox[3] - bbox[1]
-    draw.text(((TILE_SIZE - w) / 2, (TILE_SIZE - h) / 2), "GC", font=font, fill="black")
-    gold_chest.save(os.path.join(base_dir, "gold_chest.png"))
-
-    # Pickaxe
-    pickaxe = Image.new("RGBA", (TILE_SIZE, TILE_SIZE), (139, 69, 19, 255))  # Brown
-    draw = ImageDraw.Draw(pickaxe)
-    draw.line([(TILE_SIZE / 4, TILE_SIZE / 4), (TILE_SIZE / 2, TILE_SIZE / 2), (TILE_SIZE * 3 / 4, TILE_SIZE * 3 / 4)],
-              fill=(0, 0, 0, 255), width=3)
-    draw.line([(TILE_SIZE / 4, TILE_SIZE * 3 / 4), (TILE_SIZE / 2, TILE_SIZE / 2), (TILE_SIZE * 3 / 4, TILE_SIZE / 4)],
-              fill=(0, 0, 0, 255), width=3)
-    bbox = draw.textbbox((0, 0), "P", font=font)
-    w = bbox[2] - bbox[0]
-    h = bbox[3] - bbox[1]
-    draw.text(((TILE_SIZE - w) / 2, (TILE_SIZE - h) / 2), "P", font=font, fill="white")
-    pickaxe.save(os.path.join(base_dir, "pickaxe.png"))
-
-    # Portal
-    portal = Image.new("RGBA", (TILE_SIZE, TILE_SIZE), (0, 0, 0, 0))  # Transparent background
-    draw = ImageDraw.Draw(portal)
-    # Swirling effect
-    draw.ellipse([5, 5, TILE_SIZE - 5, TILE_SIZE - 5], fill=(75, 0, 130, 200))  # Indigo
-    draw.ellipse([10, 10, TILE_SIZE - 10, TILE_SIZE - 10], fill=(138, 43, 226, 220))  # BlueViolet
-    draw.ellipse([15, 15, TILE_SIZE - 15, TILE_SIZE - 15], fill=(255, 255, 255, 255))  # White center
-    portal.save(os.path.join(base_dir, "portal.png"))
-
-
-class Enemy:
-    def __init__(self, name, health, damage, xp_reward, loot):
-        self.name = name
-        self.health = health
-        self.damage = damage
-        self.xp_reward = xp_reward
-        self.loot = loot
-
-
-class CombatMiniGameWindow:
-    def __init__(self, game, enemy_pos):
-        self.game = game
-        self.enemy_pos_map = enemy_pos
-        self.enemy_data = self.game.enemies[enemy_pos]
-        self.game.game_state = "combat_minigame"
-        self.game.unlocked_encyclopedia_entries.add(self.enemy_data.name)
-
-        self.window = tk.Toplevel(self.game.root)
-        self.window.title(f"Combat: {self.enemy_data.name}")
-        self.window.geometry("450x500")
-        self.window.configure(bg="#1C1C1C")
-        # Prevent closing via X to ensure combat is resolved
-        self.window.protocol("WM_DELETE_WINDOW", lambda: None)
-        self.window.attributes('-topmost', True)
-        self.window.grab_set()
-
-        # UI
-        self.main_frame = tk.Frame(self.window, bg="#8B4513", padx=10, pady=10, relief="ridge", borderwidth=4)
-        self.main_frame.pack(fill="both", expand=True, padx=10, pady=10)
-
-        self.info_label = tk.Label(self.main_frame, text=f"Outrun the {self.enemy_data.name}!", font=("Consolas", 14, "bold"), bg="#8B4513", fg="#00FFFF")
-        self.info_label.pack(pady=5)
-
-        self.status_label = tk.Label(self.main_frame, text="Dodges: 0/3", font=("Consolas", 12), bg="#8B4513", fg="#33FF33")
-        self.status_label.pack(pady=5)
-
-        self.canvas = tk.Canvas(self.main_frame, width=400, height=400, bg="#222222", highlightthickness=2, highlightbackground="#333333")
-        self.canvas.pack()
-
-        self.grid_size = 8
-        self.cell_size = 50
-        self.player_local_pos = [0, 0]
-        self.enemy_local_pos = [7, 7]
-        self.player_dodges = 0
-        self.max_dodges = 3
-
-        self.draw_minigame()
-
-        self.window.bind("<Key>", self.on_key)
-        self.window.focus_force()
-
-        self.game.root.after(1000, self.enemy_move_step)
-
-    def draw_minigame(self):
-        self.canvas.delete("all")
-
-        # Draw Player
-        px, py = self.player_local_pos
-        self.canvas.create_image(px * self.cell_size + 25, py * self.cell_size + 25, image=self.game.player_img)
-
-        # Draw Enemy
-        ex, ey = self.enemy_local_pos
-        enemy_img = self.game.enemy_img if self.enemy_data.name == "Slime" else self.game.goblin_img
-        self.canvas.create_image(ex * self.cell_size + 25, ey * self.cell_size + 25, image=enemy_img)
-
-    def on_key(self, event):
-        key = event.keysym.lower()
-        dx, dy = 0, 0
-        if key in ("up", "w"): dy = -1
-        elif key in ("down", "s"): dy = 1
-        elif key in ("left", "a"): dx = -1
-        elif key in ("right", "d"): dx = 1
-
-        nx, ny = self.player_local_pos[0] + dx, self.player_local_pos[1] + dy
-        if 0 <= nx < self.grid_size and 0 <= ny < self.grid_size:
-            # Check if walking into enemy
-            if [nx, ny] == self.enemy_local_pos:
-                self.game_over_combat("caught")
-            else:
-                self.player_local_pos = [nx, ny]
-                self.draw_minigame()
-
-    def enemy_move_step(self):
-        if not self.window.winfo_exists(): return
-
-        # Move towards player
-        dx = self.player_local_pos[0] - self.enemy_local_pos[0]
-        dy = self.player_local_pos[1] - self.enemy_local_pos[1]
-
-        if dx != 0:
-            self.enemy_local_pos[0] += 1 if dx > 0 else -1
-        elif dy != 0:
-            self.enemy_local_pos[1] += 1 if dy > 0 else -1
-
-        self.draw_minigame()
-
-        if self.enemy_local_pos == self.player_local_pos:
-            self.game_over_combat("caught")
-        else:
-            self.player_dodges += 1
-            self.status_label.config(text=f"Dodges: {self.player_dodges}/{self.max_dodges}")
-
-            if self.player_dodges >= self.max_dodges:
-                self.game_over_combat("win")
-            else:
-                delay = 800 if self.enemy_data.name == "Goblin" else 500
-                self.game.root.after(delay, self.enemy_move_step)
-
-    def game_over_combat(self, result):
-        self.window.destroy()
-        self.game.game_state = "exploration"
-
-        if result == "win":
-            self.game.info_label.config(text=f"You successfully outran the {self.enemy_data.name}!")
-            self.game.add_xp(self.enemy_data.xp_reward)
-            self.game.add_loot(self.enemy_data.loot)
-            if self.enemy_pos_map in self.game.enemies:
-                del self.game.enemies[self.enemy_pos_map]
-            if AUDIO_ENABLED:
-                self.game.play_sound("victory.wav")
-        else:
-             self.game.info_label.config(text=f"The {self.enemy_data.name} caught you!")
-             if self.enemy_data.name == "Goblin":
-                 self.game.take_damage(self.game.health, "goblin-caught")
-             else:
-                 self.game.take_damage(self.enemy_data.damage, "Slime")
-
-        self.game.draw_map()
-        self.game.update_status()
-
-
-class EncycodepediaWindow:
-    def __init__(self, game):
-        self.game = game
-        self.window = tk.Toplevel(game.root)
-        self.window.title("Encycodepedia")
-        self.window.geometry("400x500")
-        self.window.configure(bg="#1C1C1C")
-
-        self.all_entries = {
-            "Enemies": ["Slime", "Goblin", "Typomancer"],
-            "Items": ["Silver Key", "Gold Key", "Sword", "Pickaxe", "Goblin Axe", "Slipperoo!"],
-            "Tiles": ["Spikes", "Fire", "Rock", "Tree"],
-            "NPCs": [],
-            "Topics": ["Control Flow", "Loops", "Functions", "Lists", "Dictionaries", "Sets", "Classes"]
-        }
-
-        self.descriptions = {
-            "Slime": "A common, low-level enemy that can be defeated by outmaneuvering it. They drop a gooey substance.",
-            "Goblin": "A fast and cunning enemy. If they catch you, it's game over!",
-            "Typomancer": "A master of words and a quirky sorcerer. She challenges travelers to a typing test to prove their wit.",
-            "Silver Key": "A key used to open Silver Chests, which contain a small amount of XP.",
-            "Gold Key": "A rare key used to open Gold Chests, which contain valuable loot like a Sword or Pickaxe.",
-            "Sword": "A powerful weapon that allows you to instantly defeat enemies on contact.",
-            "Pickaxe": "A tool used to break through Rock formations, creating a new path.",
-            "Goblin Axe": "An item dropped by a Goblin. Can be used to chop down Trees.",
-            "Slipperoo!": "A pair of boots crafted from Slime Goo. Allows you to slide safely over spikes without taking damage.",
-            "Spikes": "A dangerous floor hazard. Stepping on them will cause you to lose health.",
-            "Fire": "A fiery floor hazard. Causes more damage than spikes.",
-            "Rock": "A large boulder blocking your path. Requires a Pickaxe to be destroyed.",
-            "Tree": "A large tree blocking your path. Requires a Goblin Axe to be chopped down.",
-            "Control Flow": "The order in which individual statements or instructions are executed in a program.",
-            "Loops": "A programming construct that repeats a sequence of instructions until a specific condition is met.",
-            "Functions": "A block of organized, reusable code that is used to perform a single, related action.",
-            "Lists": "A collection of items which are ordered and changeable. Allows duplicate members.",
-            "Dictionaries": "A collection of key-value pairs which is ordered, changeable, and does not allow duplicates.",
-            "Sets": "An unordered collection of unique and immutable objects.",
-            "Classes": "A blueprint for creating objects, providing a way to structure code and data."
-        }
-
-        # --- UI: Tree Wrapper ---
-        self.main_frame = tk.Frame(
-            self.window,
-            bg="#8B4513",
-            padx=10, pady=10,
-            relief="ridge", borderwidth=4
-        )
-        self.main_frame.pack(fill="both", expand=True, padx=10, pady=10)
-
-        self.label = tk.Label(self.main_frame, text="Encycodepedia", font=("Consolas", 16, "bold"), bg="#8B4513", fg="#33FF33")
-        self.label.pack(pady=10)
-
-        self.frame = tk.Frame(self.main_frame, bg="#2B2B2B", padx=10, pady=10)
-        self.frame.pack(fill="both", expand=True, padx=5, pady=5)
-
-        self.canvas = tk.Canvas(self.frame, bg="#2B2B2B", highlightthickness=0)
-        self.canvas.pack(side="left", fill="both", expand=True)
-        self.scrollbar = tk.Scrollbar(self.frame, orient="vertical", command=self.canvas.yview)
-        self.scrollbar.pack(side="right", fill="y")
-        self.canvas.configure(yscrollcommand=self.scrollbar.set)
-
-        self.inner_frame = tk.Frame(self.canvas, bg="#2B2B2B")
-        self.canvas.create_window((0, 0), window=self.inner_frame, anchor="nw")
-
-        self.update_display()
-        self.inner_frame.bind("<Configure>", self.on_frame_configure)
-
-    def on_frame_configure(self, event):
-        self.canvas.configure(scrollregion=self.canvas.bbox("all"))
-
-    def show_description(self, entry_name):
-        description = self.descriptions.get(entry_name, "No description available.")
-        messagebox.showinfo(entry_name, description)
-
-    def update_display(self):
-        for widget in self.inner_frame.winfo_children():
-            widget.destroy()
-
-        for category, entries in self.all_entries.items():
-            header = tk.Label(self.inner_frame, text=f"-- {category} --", font=("Consolas", 12, "bold"), bg="#2B2B2B",
-                              fg="#00FFFF")
-            header.pack(fill="x", pady=(10, 5))
-            for entry in entries:
-                is_unlocked = entry in self.game.unlocked_encyclopedia_entries
-                display_name = entry if is_unlocked else "???"
-                label_color = "#33FF33" if is_unlocked else "gray"
-
-                label = tk.Label(self.inner_frame, text=display_name, font=("Consolas", 10), bg="#2B2B2B", fg=label_color,
-                                 cursor="hand2" if is_unlocked else "")
-                label.pack(fill="x", padx=10)
-
-                if is_unlocked:
-                    label.bind("<Button-1>", lambda e, name=entry: self.show_description(name))
-
-
-class StatsSystem:
-    def __init__(self, game):
-        self.game = game
-        self.window = tk.Toplevel(game.root)
-        self.window.title("Upgrade Stats")
-        self.window.geometry("350x240")
-        self.window.configure(bg="#1C1C1C")
-
-        # --- UI: Tree Wrapper ---
-        self.main_frame = tk.Frame(
-            self.window,
-            bg="#8B4513",
-            padx=10, pady=10,
-            relief="ridge", borderwidth=4
-        )
-        self.main_frame.pack(fill="both", expand=True, padx=10, pady=10)
-
-        self.label = tk.Label(self.main_frame, text="Available Skill Points: 0", bg="#8B4513", fg="#33FF33",
-                              font=("Consolas", 12))
-        self.label.pack(pady=10)
-
-        self.hp_frame = tk.Frame(self.main_frame, bg="#2B2B2B")
-        self.hp_frame.pack(pady=5, padx=10, fill="x")
-        self.hp_label = tk.Label(self.hp_frame, text=f"Path of the Warrior: {self.game.stats['HP']}/5", bg="#2B2B2B",
-                                 fg="#33FF33")
-        self.hp_label.pack(side="left", padx=5)
-        self.hp_btn = tk.Button(self.hp_frame, text="Upgrade Path of the Warrior (+20 HP)",
-                                command=lambda: self.upgrade_stat("HP"),
-                                bg="#33CCFF", fg="#1C1C1C")
-        self.hp_btn.pack(side="right", padx=5)
-
-        self.wits_frame = tk.Frame(self.main_frame, bg="#2B2B2B")
-        self.wits_frame.pack(pady=5, padx=10, fill="x")
-        self.wits_label = tk.Label(self.wits_frame, text=f"Path of the Coder: {self.game.stats['Wits']}/5",
-                                   bg="#2B2B2B", fg="#33FF33")
-        self.wits_label.pack(side="left", padx=5)
-        self.wits_btn = tk.Button(self.wits_frame, text="Upgrade Path of the Coder (+1 Clue)",
-                                  command=lambda: self.upgrade_stat("Wits"), bg="#33CCFF", fg="#1C1C1C")
-        self.wits_btn.pack(side="right", padx=5)
-
-        self.update_display()
-
-    def upgrade_stat(self, stat):
-        if self.game.skill_points > 0 and self.game.stats[stat] < 5:
-            self.game.skill_points -= 1
-            self.game.stats[stat] += 1
-            if stat == "HP":
-                self.game.max_health += 20
-                self.game.health += 20
-                if self.game.health > self.game.max_health:
-                    self.game.health = self.max_health
-
-            display_names = {"HP": "Path of the Warrior", "Wits": "Path of the Coder"}
-            stat_name = display_names.get(stat, stat)
-            messagebox.showinfo("Success", f"You have upgraded {stat_name} to level {self.game.stats[stat]}!")
-            self.game.update_status()
-            self.update_display()
-
-    def update_display(self):
-        self.label.config(text=f"Available Skill Points: {self.game.skill_points}")
-        self.hp_label.config(text=f"Path of the Warrior: {self.game.stats['HP']}/5")
-        self.wits_label.config(text=f"Path of the Coder: {self.game.stats['Wits']}/5")
-
-        self.hp_btn.config(state="normal" if self.game.skill_points > 0 and self.game.stats['HP'] < 5 else "disabled")
-        self.wits_btn.config(
-            state="normal" if self.game.skill_points > 0 and self.game.stats['Wits'] < 5 else "disabled")
-
-
-class CraftingWindow:
-    def __init__(self, game):
-        self.game = game
-        self.window = tk.Toplevel(game.root)
-        self.window.title("Crafting")
-        self.window.geometry("400x200")
-        self.window.configure(bg="#1C1C1C")
-
-        # --- UI: Tree Wrapper ---
-        self.main_frame = tk.Frame(
-            self.window,
-            bg="#8B4513",
-            padx=10, pady=10,
-            relief="ridge", borderwidth=4
-        )
-        self.main_frame.pack(fill="both", expand=True, padx=10, pady=10)
-
-        self.recipes = {
-            "Slipperoo!": {"Slime Goo": 5}
-        }
-
-        self.title_label = tk.Label(self.main_frame, text="Available Recipes", bg="#8B4513", fg="#33FF33",
-                                    font=("Consolas", 16, "bold"))
-        self.title_label.pack(pady=10)
-
-        # Frame for Slipperoo recipe
-        self.slipperoo_frame = tk.Frame(self.main_frame, bg="#2B2B2B")
-        self.slipperoo_frame.pack(pady=5, padx=10, fill="x")
-
-        self.recipe_label = tk.Label(self.slipperoo_frame, text="Slipperoo! (Requires: 5x Slime Goo)", bg="#2B2B2B",
-                                     fg="#33FF33")
-        self.recipe_label.pack(side="left", padx=5)
-
-        self.craft_btn = tk.Button(self.slipperoo_frame, text="Craft", command=lambda: self.craft_item("Slipperoo!"),
-                                   bg="#33CCFF", fg="#1C1C1C")
-        self.craft_btn.pack(side="right", padx=5)
-
-        self.update_display()
-
-    def craft_item(self, item_name):
-        recipe = self.recipes.get(item_name)
-        if not recipe:
-            messagebox.showerror("Error", "Unknown recipe.")
-            return
-
-        # Check if player has enough ingredients
-        can_craft = True
-        for ingredient, required_amount in recipe.items():
-            if self.game.inventory.count(ingredient) < required_amount:
-                can_craft = False
-                break
-
-        if can_craft:
-            # Remove ingredients
-            for ingredient, required_amount in recipe.items():
-                for _ in range(required_amount):
-                    self.game.inventory.remove(ingredient)
-
-            # Add crafted item
-            self.game.add_loot(item_name)
-            messagebox.showinfo("Success!", f"You successfully crafted {item_name}!")
-            self.game.update_status()
-            self.update_display()
-        else:
-            messagebox.showwarning("Failed", "You don't have enough ingredients to craft this item.")
-
-    def update_display(self):
-        # Check for Slipperoo recipe
-        required_goo = self.recipes["Slipperoo!"]["Slime Goo"]
-        has_goo = self.game.inventory.count("Slime Goo")
-
-        self.recipe_label.config(text=f"Slipperoo! (Req: 5x Slime Goo) - You have: {has_goo}")
-
-        if has_goo >= required_goo:
-            self.craft_btn.config(state="normal")
-        else:
-            self.craft_btn.config(state="disabled")
-
-
-class LeaderboardWindow:
-    def __init__(self, game):
-        self.game = game
-        self.previous_state = self.game.game_state
-        self.game.game_state = "menu"
-        self.window = tk.Toplevel(game.root)
-        self.window.title("Leaderboard")
-        self.window.geometry("500x400")
-        self.window.configure(bg="#1C1C1C")
-        self.window.protocol("WM_DELETE_WINDOW", self.on_close)
-
-        # --- UI: Wrapper ---
-        self.main_frame = tk.Frame(
-            self.window,
-            bg="#8B4513",
-            padx=10, pady=10,
-            relief="ridge", borderwidth=4
-        )
-        self.main_frame.pack(fill="both", expand=True, padx=10, pady=10)
-
-        tk.Label(self.main_frame, text=f"Leaderboard ({self.game.difficulty})", font=("Consolas", 16, "bold"), bg="#8B4513", fg="#33FF33").pack(pady=10)
-
-        # Scrollable Frame
-        self.canvas = tk.Canvas(self.main_frame, bg="#2B2B2B", highlightthickness=0)
-        self.scrollbar = tk.Scrollbar(self.main_frame, orient="vertical", command=self.canvas.yview)
-        self.scrollable_frame = tk.Frame(self.canvas, bg="#2B2B2B")
-
-        self.scrollable_frame.bind(
-            "<Configure>",
-            lambda e: self.canvas.configure(
-                scrollregion=self.canvas.bbox("all")
-            )
-        )
-
-        self.canvas.create_window((0, 0), window=self.scrollable_frame, anchor="nw")
-        self.canvas.configure(yscrollcommand=self.scrollbar.set)
-
-        self.canvas.pack(side="left", fill="both", expand=True, padx=5, pady=5)
-        self.scrollbar.pack(side="right", fill="y", pady=5)
-
-        self.load_leaderboard()
-
-        self.close_btn = tk.Button(self.main_frame, text="Close Game", command=self.window.destroy, bg="#FF3366", fg="#1C1C1C", font=("Consolas", 12, "bold"))
-        self.close_btn.pack(pady=10)
-        self.close_btn.config(command=self.close_and_quit)
-
-        self.reset_btn = tk.Button(self.main_frame, text="Reset Leaderboard", command=self.reset_leaderboard, bg="#FFD700", fg="#1C1C1C", font=("Consolas", 10, "bold"))
-        self.reset_btn.pack(pady=5)
-
-    def reset_leaderboard(self):
-        username = simpledialog.askstring("Admin Login", "Enter Admin Username:")
-        if not username:
-            return
-
-        password = simpledialog.askstring("Admin Login", "Enter Admin Password:", show="*")
-        if not password:
-            return
-
-        if username == ADMIN_USERNAME and password == ADMIN_PASSWORD:
-            if messagebox.askyesno("Confirm Reset", "Are you sure you want to reset the leaderboard? This cannot be undone."):
-                db_utils.reset_leaderboard()
-                messagebox.showinfo("Success", "Leaderboard has been reset.")
-                self.load_leaderboard()
-        else:
-            messagebox.showerror("Error", "Invalid credentials!")
-
-    def load_leaderboard(self):
-        scores = db_utils.fetch_leaderboard(self.game.difficulty)
-
-        # Clear existing widgets in scrollable_frame
-        for widget in self.scrollable_frame.winfo_children():
-            widget.destroy()
-
-        # Header
-        header_frame = tk.Frame(self.scrollable_frame, bg="#2B2B2B")
-        header_frame.pack(fill="x", pady=2)
-        tk.Label(header_frame, text="Rank", width=5, bg="#2B2B2B", fg="#FFD700", font=("Consolas", 10, "bold")).pack(side="left")
-        tk.Label(header_frame, text="Name", width=15, bg="#2B2B2B", fg="#FFD700", font=("Consolas", 10, "bold")).pack(side="left")
-        tk.Label(header_frame, text="Score (XP)", width=10, bg="#2B2B2B", fg="#FFD700", font=("Consolas", 10, "bold")).pack(side="left")
-        tk.Label(header_frame, text="Time (s)", width=10, bg="#2B2B2B", fg="#FFD700", font=("Consolas", 10, "bold")).pack(side="left")
-
-        for idx, row in enumerate(scores, 1):
-            row_frame = tk.Frame(self.scrollable_frame, bg="#2B2B2B")
-            row_frame.pack(fill="x", pady=2)
-
-            fg_color = "#33FF33" if row['name'] == self.game.player_name else "#FFFFFF"
-
-            tk.Label(row_frame, text=f"{idx}", width=5, bg="#2B2B2B", fg=fg_color, font=("Consolas", 10)).pack(side="left")
-            tk.Label(row_frame, text=f"{row['name']}", width=15, bg="#2B2B2B", fg=fg_color, font=("Consolas", 10)).pack(side="left")
-            tk.Label(row_frame, text=f"{row['score']}", width=10, bg="#2B2B2B", fg=fg_color, font=("Consolas", 10)).pack(side="left")
-            tk.Label(row_frame, text=f"{row['time_taken']}", width=10, bg="#2B2B2B", fg=fg_color, font=("Consolas", 10)).pack(side="left")
-
-    def on_close(self):
-        self.game.game_state = self.previous_state
-        self.window.destroy()
-
-    def close_and_quit(self):
-        self.window.destroy()
-        self.game.root.quit()
-
-
-class InventoryWindow:
-    def __init__(self, game):
-        self.game = game
-        self.window = tk.Toplevel(game.root)
-        self.window.title("Inventory")
-        self.window.geometry("450x550")
-        self.window.configure(bg="#1C1C1C")
-        self.window.resizable(False, False)
-
-        # --- UI: Tree Wrapper ---
-        self.main_frame = tk.Frame(
-            self.window,
-            bg="#8B4513",
-            padx=10, pady=10,
-            relief="ridge", borderwidth=4
-        )
-        self.main_frame.pack(fill="both", expand=True, padx=10, pady=10)
-
-        # Map to count items for stacking
-        self.item_counts = {}
-        for item in self.game.inventory:
-            self.item_counts[item] = self.item_counts.get(item, 0) + 1
-
-        self.unique_items = list(self.item_counts.keys())
-        self.grid_size = 5  # 5x5 grid for 25 slots
-
-        tk.Label(self.main_frame, text="Player Inventory", font=("Consolas", 16, "bold"), bg="#8B4513", fg="#33FF33").pack(pady=10)
-
-        self.grid_frame = tk.Frame(self.main_frame, bg="#2B2B2B", padx=5, pady=5) # Frame color
-        self.grid_frame.pack(padx=10, pady=10)
-
-        self.action_frame = tk.Frame(self.main_frame, bg="#8B4513") # Base color
-        self.action_frame.pack(fill='x', padx=10, pady=(0, 10))
-
-        self.slot_buttons = []
-        self.display_inventory_grid()
-
-    def get_image_path(self, item_name):
-        base_dir = get_base_path()
-        filename = None
-        if "Silver Key" in item_name: filename = "silver_key.png"
-        elif "Gold Key" in item_name: filename = "gold_key.png"
-        elif "Sword" in item_name: filename = "sword.png"
-        elif "Pickaxe" in item_name: filename = "pickaxe.png"
-        elif "Goblin Axe" in item_name: filename = "goblin_axe.png"
-        elif "Slime Goo" in item_name: filename = "slime_goo.png"
-        elif "Potion" in item_name: filename = "potion.png"
-
-        if filename:
-            path = os.path.join(base_dir, filename)
-            if os.path.exists(path):
-                return path
-            path = os.path.join(base_dir, "assets", filename)
-            if os.path.exists(path):
-                return path
-        return None
-
-    def load_item_image(self, item_name, size):
-        path = self.get_image_path(item_name)
-        if path:
-            try:
-                img = Image.open(path).resize(size, Image.LANCZOS)
-                return ImageTk.PhotoImage(img)
-            except Exception as e:
-                print(f"Error loading image for {item_name}: {e}")
-                return None
-        return None
-
-    def get_item_icon_config(self, item_name):
-        # Returns item-specific text, color, and description
-        if "Key" in item_name:
-            return "KEY", "#FFD700", "Use to open chests."
-        if item_name == "Sword":
-            return "SWD", "#FF3366", "Allows instant enemy defeat."
-        if item_name == "Pickaxe":
-            return "PXE", "#33CCFF", "Use to break rocks."
-        if item_name == "Goblin Axe":
-            return "AXE", "#00FFFF", "Use to chop down trees."
-        if item_name == "Slime Goo":
-            return "GOO", "#33FF33", "Crafting material."
-        if item_name == "Slipperoo!":
-            return "SLP", "#00FFFF", "Passive item. Walk safely over spikes."
-        if "Potion" in item_name:
-            return "POT", "#FF3366", "Restores 50 HP."
-        return "???", "gray", "Unknown item."
-
-    def display_inventory_grid(self):
-        for widget in self.grid_frame.winfo_children():
-            widget.destroy()
-        self.slot_buttons.clear()
-
-        item_idx = 0
-        for r in range(self.grid_size):
-            for c in range(self.grid_size):
-                item_name = None
-                count = 0
-                if item_idx < len(self.unique_items):
-                    item_name = self.unique_items[item_idx]
-                    count = self.item_counts[item_name]
-                    item_idx += 1
-
-                if item_name:
-                    item_text, item_color, _ = self.get_item_icon_config(item_name)
-                    slot_container = tk.Frame(self.grid_frame, bg="#2B2B2B", borderwidth=2, relief="solid")
-                    slot_container.grid(row=r, column=c, padx=5, pady=5)
-
-                    btn_text = f"{item_text}"
-                    btn_font = ("Consolas", 10, "bold")
-                    if count == 1 and item_name not in ["Silver Key", "Gold Key", "Slime Goo", "Potion"]:
-                        btn_text = item_name.split()[0][:3].upper() if " " in item_name else item_name[:3].upper()
-
-                    img = self.load_item_image(item_name, (40, 40))
-
-                    btn_kwargs = {
-                        "text": btn_text if not img else "",
-                        "bg": "#1C1C1C",
-                        "fg": item_color,
-                        "font": btn_font,
-                        "compound": "center",
-                        "command": lambda name=item_name: self.show_item_actions(name)
-                    }
-
-                    if img:
-                        btn_kwargs["image"] = img
-                    else:
-                        btn_kwargs["width"] = 5
-                        btn_kwargs["height"] = 2
-
-                    btn = tk.Button(slot_container, **btn_kwargs)
-                    if img:
-                        btn.image = img
-                        btn.config(width=44, height=44)
-
-                    btn.pack(padx=2, pady=2)
-                    if count > 1 or "Key" in item_name or "Goo" in item_name:
-                        tk.Label(btn, text=f"x{count}", bg="#1C1C1C", fg="#33FF33", font=("Consolas", 7, "bold")).place(relx=1.0, rely=1.0, anchor="se")
-                    self.slot_buttons.append(btn)
-                else:
-                    empty_frame = tk.Frame(self.grid_frame, bg="#2B2B2B", width=50, height=50, borderwidth=1, relief="sunken")
-                    empty_frame.grid(row=r, column=c, padx=5, pady=5)
-                    empty_frame.grid_propagate(False)
-
-    def show_item_actions(self, item_name):
-        for widget in self.action_frame.winfo_children():
-            widget.destroy()
-
-        _, item_color, item_desc = self.get_item_icon_config(item_name)
-        count = self.item_counts[item_name]
-
-        img = self.load_item_image(item_name, (100, 100))
-        if img:
-            lbl = tk.Label(self.action_frame, image=img, bg="#8B4513")
-            lbl.image = img
-            lbl.pack(pady=5)
-
-        tk.Label(self.action_frame, text=f"Item: {item_name} (x{count})", font=("Consolas", 12, "bold"), bg="#8B4513", fg="#33FF33").pack(pady=5)
-        tk.Label(self.action_frame, text=item_desc, font=("Consolas", 10), bg="#8B4513", fg="#00FFFF", wraplength=400).pack()
-
-        if "Potion" in item_name:
-            tk.Button(self.action_frame, text="Use Potion (+50 HP)", bg="#33CCFF", fg="#1C1C1C", command=lambda: self.use_item(item_name)).pack(pady=10)
-        elif "Key" in item_name or "Goo" in item_name or "Slipperoo" in item_name or "Axe" in item_name or "Sword" in item_name:
-             tk.Label(self.action_frame, text="Use is passive or requires a map interaction.", bg="#8B4513", fg="gray").pack(pady=10)
-
-    def use_item(self, item_name):
-        if item_name not in self.game.inventory:
-            messagebox.showwarning("Error", f"You do not have a {item_name} to use.")
-            return
-
-        if "Potion" in item_name:
-            if self.game.health < self.game.max_health:
-                heal_amount = 50
-                self.game.health += heal_amount
-                if self.game.health > self.game.max_health:
-                    self.game.health = self.game.max_health
-
-                self.game.inventory.remove(item_name)
-                self.game.update_status()
-                messagebox.showinfo("Used", f"You used a {item_name} and recovered {heal_amount} HP!")
-
-                self.item_counts[item_name] -= 1
-                if self.item_counts[item_name] == 0:
-                    del self.item_counts[item_name]
-                    self.unique_items = list(self.item_counts.keys())
-
-                self.display_inventory_grid()
-                for widget in self.action_frame.winfo_children():
-                    widget.destroy()
-            else:
-                messagebox.showinfo("Full HP", "Your health is already full!")
-        else:
-            messagebox.showinfo("Tool", f"The {item_name} is used passively or on the map.")
-
-
-class NameSelectionWindow:
-    """Custom window to input player name and choose gender before starting the main game."""
-    def __init__(self, master):
-        self.master = master
-        # self.master.withdraw() # We withdraw in __main__
-        self.window = tk.Toplevel(master)
-        self.window.title("Character Creation")
-        self.window.geometry("380x300")
-        self.window.configure(bg="#1C1C1C")
-        self.window.resizable(False, False)
-
-        self.window.protocol("WM_DELETE_WINDOW", self.on_close)
-        self.window.grab_set()
-
-        # --- UI: Tree Wrapper ---
-        self.main_frame = tk.Frame(
-            self.window,
-            bg="#8B4513",
-            padx=10, pady=10,
-            relief="ridge", borderwidth=4
-        )
-        self.main_frame.pack(fill="both", expand=True, padx=10, pady=10)
-
-        tk.Label(
-            self.main_frame,
-            text="State Your Name Adventurer",
-            font=("Consolas", 14, "bold"),
-            bg="#8B4513",
-            fg="#33FF33"
-        ).pack(pady=(10, 10))
-
-        input_frame = tk.Frame(
-            self.main_frame,
-            bg="#2B2B2B",
-            padx=10,
-            pady=10,
-            relief="groove",
-            borderwidth=2
-        )
-        input_frame.pack(pady=10, padx=20)
-
-        self.name_entry = tk.Entry(
-            input_frame,
-            font=("Consolas", 14),
-            bg="#1C1C1C",
-            fg="#00FFFF",
-            insertbackground="#00FFFF",
-            width=25,
-            bd=0,
-            relief="flat"
-        )
-        self.name_entry.pack()
-        self.name_entry.focus_set()
-
-        tk.Label(
-            self.main_frame,
-            text="SELECT AVATAR TYPE",
-            font=("Consolas", 12),
-            bg="#8B4513",
-            fg="#FFD700"
-        ).pack(pady=(20, 10))
-
-        button_frame = tk.Frame(self.main_frame, bg="#8B4513")
-        button_frame.pack()
-
-        tk.Button(
-            button_frame,
-            text="BOY (M)",
-            width=10,
-            bg="#33CCFF",
-            fg="#1C1C1C",
-            font=("Consolas", 12, "bold"),
-            command=lambda: self.start_game("boy")
-        ).pack(side="left", padx=15)
-
-        tk.Button(
-            button_frame,
-            text="GIRL (F)",
-            width=10,
-            bg="#FF3366",
-            fg="#1C1C1C",
-            font=("Consolas", 12, "bold"),
-            command=lambda: self.start_game("girl")
-        ).pack(side="right", padx=15)
-
-        tk.Label(
-            self.main_frame,
-            text="SELECT DIFFICULTY",
-            font=("Consolas", 12),
-            bg="#8B4513",
-            fg="#FFD700"
-        ).pack(pady=(20, 10))
-
-        self.difficulty_var = tk.StringVar(value="Medium")
-        difficulty_frame = tk.Frame(self.main_frame, bg="#8B4513")
-        difficulty_frame.pack()
-
-        for diff in ["Easy", "Medium", "Hard"]:
-            tk.Radiobutton(
-                difficulty_frame,
-                text=diff,
-                variable=self.difficulty_var,
-                value=diff,
-                bg="#8B4513",
-                fg="#33FF33",
-                selectcolor="#2B2B2B",
-                font=("Consolas", 10, "bold")
-            ).pack(side="left", padx=10)
-
-    def on_close(self):
-        """Handle window closure."""
-        self.window.destroy()
-        self.master.destroy()
-        sys.exit()
-
-    def start_game(self, gender):
-        player_name = self.name_entry.get().strip()
-        if not player_name:
-            player_name = "Hero"
-
-        difficulty = self.difficulty_var.get()
-
-        self.window.destroy()
-        self.master.deiconify()
-
-        game = RPGGame(self.master, gender=gender, player_name=player_name, difficulty=difficulty)
 
 
 class RPGGame:
@@ -1131,10 +185,8 @@ class RPGGame:
         self.loot_label = tk.Label(root, text="Loot: None", bg="#1C1C1C", fg="#FFD700", font=("Consolas", 10), anchor="w")
         self.loot_label.pack(fill="x", padx=10, pady=(0, 10))
 
-        self.grass_img = self.player_img = self.npc_img = self.enemy_img = self.goblin_img = self.typo_img = None
-        self.silver_chest_img = self.gold_chest_img = self.pickaxe_img = None
-        self.sword_img = self.goblin_axe_img = self.slime_goo_img = self.silver_key_img = self.gold_key_img = None
-        self.portal_img = None
+        # Images dictionary
+        self.images = {}
         self.image_refs = []
 
         self.load_images()
@@ -1335,55 +387,12 @@ class RPGGame:
 
     # --- Load images ---
     def load_images(self):
-        def load_resized_image(path):
-            try:
-                img = Image.open(path).resize((TILE_SIZE, TILE_SIZE), Image.LANCZOS)
-                return ImageTk.PhotoImage(img)
-            except Exception as e:
-                print(f"Error loading {path}: {e}")
-                return None
-
         base_dir = get_base_path()
-        if not all(os.path.exists(os.path.join(base_dir, img)) for img in
-                   ["grass.png", "Npc.png", "enemy.png", "goblin.png", "typomancer.png", "silver_chest.png",
-                    "gold_chest.png", "pickaxe.png", "portal.png"]):
-            create_placeholder_images(base_dir)
-
-        self.grass_img = load_resized_image(os.path.join(base_dir, "grass.png"))
-
-        # --- FILENAME FIX ---
-        self.npc_img = load_resized_image(os.path.join(base_dir, "Npc.png")) # Was "npc.png"
-        # --- END FIX ---
-
-        self.enemy_img = load_resized_image(os.path.join(base_dir, "enemy.png"))
-        self.goblin_img = load_resized_image(os.path.join(base_dir, "goblin.png"))
-        self.typo_img = load_resized_image(os.path.join(base_dir, "typomancer.png"))
-        self.silver_chest_img = load_resized_image(os.path.join(base_dir, "silver_chest.png"))
-        self.gold_chest_img = load_resized_image(os.path.join(base_dir, "gold_chest.png"))
-        self.pickaxe_img = load_resized_image(os.path.join(base_dir, "pickaxe.png"))
-        self.portal_img = load_resized_image(os.path.join(base_dir, "portal.png"))
-
-        self.sword_img = load_resized_image(os.path.join(base_dir, "sword.png"))
-        self.goblin_axe_img = load_resized_image(os.path.join(base_dir, "goblin_axe.png"))
-        self.slime_goo_img = load_resized_image(os.path.join(base_dir, "slime_goo.png"))
-        self.silver_key_img = load_resized_image(os.path.join(base_dir, "silver_key.png"))
-        self.gold_key_img = load_resized_image(os.path.join(base_dir, "gold_key.png"))
-
-        if self.gender == "girl" and os.path.exists(os.path.join(base_dir, "girl.png")):
-            self.player_img = load_resized_image(os.path.join(base_dir, "girl.png"))
-        elif self.gender == "boy" and os.path.exists(os.path.join(base_dir, "boy.png")):
-            self.player_img = load_resized_image(os.path.join(base_dir, "boy.png"))
-        else:
-            self.player_img = load_resized_image(os.path.join(base_dir, "player.png"))
-
-        self.rock_img = load_resized_image(os.path.join(base_dir, "rock.png"))
-
-        # --- FILENAME FIX ---
-        self.spikes_img = load_resized_image(os.path.join(base_dir, "Spikes.png")) # Was "spikes.png"
-        # --- END FIX ---
-
-        self.fire_img = load_resized_image(os.path.join(base_dir, "fire.png"))
-        self.tree_img = load_resized_image(os.path.join(base_dir, "tree.png"))
+        self.images = load_all_images(base_dir, self.gender)
+        # For compatibility with existing code that might access individual attributes (though I should update those too)
+        self.player_img = self.images["player"]
+        self.enemy_img = self.images["enemy"]
+        self.goblin_img = self.images["goblin"]
 
     # --- NPC, Enemy and tiles ---
     def get_npc_count_for_level(self):
@@ -1483,29 +492,24 @@ class RPGGame:
     # --- Draw map centered ---
     def draw_map(self):
         self.canvas.delete("all")
-        self.image_refs.clear()
+        self.image_refs.clear() # Keep refs to prevent GC
 
         for y in range(MAP_HEIGHT):
             for x in range(MAP_WIDTH):
                 # Grass
                 self.canvas.create_image(
                     x * TILE_SIZE, y * TILE_SIZE,
-                    anchor="nw", image=self.grass_img
+                    anchor="nw", image=self.images["grass"]
                 )
-                self.image_refs.append(self.grass_img)
+                self.image_refs.append(self.images["grass"])
 
                 # Obstacles/hazards
                 if (x, y) in self.tiles:
                     tile = self.tiles[(x, y)]
                     img = None
-                    if tile == "spikes":
-                        img = self.spikes_img
-                    elif tile == "fire":
-                        img = self.fire_img
-                    elif tile == "rock":
-                        img = self.rock_img
-                    elif tile == "tree":
-                        img = self.tree_img
+                    if tile in self.images:
+                        img = self.images[tile]
+
                     if img:
                         self.canvas.create_image(
                             x * TILE_SIZE + TILE_SIZE // 2,
@@ -1519,13 +523,13 @@ class RPGGame:
             self.canvas.create_image(
                 x * TILE_SIZE + TILE_SIZE // 2,
                 y * TILE_SIZE + TILE_SIZE // 2,
-                anchor="center", image=self.npc_img
+                anchor="center", image=self.images["npc"]
             )
-            self.image_refs.append(self.npc_img)
+            self.image_refs.append(self.images["npc"])
 
         # Chests
         for (x, y), chest_type in self.chests.items():
-            img = self.silver_chest_img if chest_type == "silver" else self.gold_chest_img
+            img = self.images["silver_chest"] if chest_type == "silver" else self.images["gold_chest"]
             self.canvas.create_image(
                 x * TILE_SIZE + TILE_SIZE // 2,
                 y * TILE_SIZE + TILE_SIZE // 2,
@@ -1535,11 +539,11 @@ class RPGGame:
 
         # Enemies
         for (x, y), enemy in self.enemies.items():
-            img = self.enemy_img
+            img = self.images["enemy"]
             if enemy.name == "Goblin":
-                img = self.goblin_img
+                img = self.images["goblin"]
             elif enemy.name == "Typomancer":
-                img = self.typo_img
+                img = self.images["typomancer"]
             self.canvas.create_image(
                 x * TILE_SIZE + TILE_SIZE // 2,
                 y * TILE_SIZE + TILE_SIZE // 2,
@@ -1553,18 +557,18 @@ class RPGGame:
             self.canvas.create_image(
                 px * TILE_SIZE + TILE_SIZE // 2,
                 py * TILE_SIZE + TILE_SIZE // 2,
-                anchor="center", image=self.portal_img
+                anchor="center", image=self.images["portal"]
             )
-            self.image_refs.append(self.portal_img)
+            self.image_refs.append(self.images["portal"])
 
         # Player
         px, py = self.player_pos
         self.canvas.create_image(
             px * TILE_SIZE + TILE_SIZE // 2,
             py * TILE_SIZE + TILE_SIZE // 2,
-            anchor="center", image=self.player_img
+            anchor="center", image=self.images["player"]
         )
-        self.image_refs.append(self.player_img)
+        self.image_refs.append(self.images["player"])
 
         self.update_status()
 
@@ -1654,104 +658,144 @@ class RPGGame:
                 self.draw_map()
                 return  # Stop further movement logic for this turn
 
-        # Special check for Typomancer first, as she's a special kind of enemy
-        if pos in self.enemies and self.enemies[pos].name == "Typomancer":
-            self.current_enemy_pos = pos
-            self.start_typomancer_minigame(pos)
+        if self.handle_interaction(pos):
             return
-
-        # Check for instant kill with sword
-        if self.sword_acquired and pos in self.enemies:
-            enemy = self.enemies[pos]
-            self.unlocked_encyclopedia_entries.add(enemy.name)
-            messagebox.showinfo("Sword Power!", f"You brandish your sword and instantly defeat the {enemy.name}!")
-            self.add_xp(enemy.xp_reward)
-            self.add_loot(enemy.loot)
-            del self.enemies[pos]
-            self.draw_map()
-            self.update_status()
-            return
-
-        # Handle other enemy encounters
-        if pos in self.enemies:
-            self.current_enemy_pos = pos
-            CombatMiniGameWindow(self, pos)
-            return
-
-        # Handle chests
-        if pos in self.chests:
-            chest_type = self.chests[pos]
-            self.unlocked_encyclopedia_entries.add(f"{chest_type.capitalize()} Chest")
-            required_key = "Silver Key" if chest_type == "silver" else "Gold Key"
-            if required_key in self.inventory:
-                self.inventory.remove(required_key)
-                del self.chests[pos]
-
-                if chest_type == "silver":
-                    self.add_xp(5)
-                    goo_amount = random.randint(1, 3)
-                    for _ in range(goo_amount):
-                        self.add_loot("Slime Goo")
-                    messagebox.showinfo("Success!",
-                                        f"You opened the silver chest and gained 5 XP and {goo_amount} Slime Goo!")
-                elif chest_type == "gold":
-                    self.add_xp(10)
-                    # Gold chest rewards a random item
-                    reward = random.choice(["Sword", "Pickaxe"])
-                    self.add_loot(reward)
-                    messagebox.showinfo("Success!", f"You opened the gold chest and gained 10 XP and a {reward}!")
-
-                self.player_pos = [new_x, new_y]
-                self.draw_map()
-                self.update_status()
-                return  # Exit early after a chest interaction
-            else:
-                messagebox.showwarning("Locked!", f"This {chest_type} chest is locked! You need a {required_key}.")
-                return  # Stop movement if chest is locked
-
-        if pos in self.tiles:
-            tile = self.tiles[pos]
-            self.unlocked_encyclopedia_entries.add(tile.capitalize())
-            if tile == "rock":
-                if "Pickaxe" in self.inventory:
-                    if messagebox.askyesno("Clear Path", "Do you want to use your Pickaxe to clear this rock?"):
-                        del self.tiles[pos]
-                        messagebox.showinfo("Success!", "You cleared the rock and can now pass!")
-                        self.player_pos = [new_x, new_y]
-                    else:
-                        return
-                else:
-                    messagebox.showinfo("Blocked!", "A rock blocks your path. You need a Pickaxe to clear it!")
-                    return
-            elif tile == "tree":
-                if "Goblin Axe" in self.inventory:
-                    if messagebox.askyesno("Chop Tree", "Do you want to use your Goblin Axe to chop down this tree?"):
-                        del self.tiles[pos]
-                        messagebox.showinfo("Success!", "You chopped down the tree!")
-                        self.player_pos = [new_x, new_y]
-                    else:
-                        return
-                else:
-                    messagebox.showinfo("Blocked!", "A tree blocks your path. You need a Goblin Axe to chop it down!")
-                    return
-            elif tile == "spikes":
-                if "Slipperoo!" in self.inventory:
-                    messagebox.showinfo("Safe!", "Your Slipperoo! lets you slide safely over the spikes!")
-                else:
-                    self.take_damage(10, "spikes")
-            elif tile == "fire":
-                self.take_damage(20, "fire")
 
         self.player_pos = [new_x, new_y]
+        self.draw_map()
 
+    def handle_interaction(self, pos):
+        """Returns True if the move should be blocked/handled completely (no simple walk)."""
+
+        # 1. Enemies
+        if pos in self.enemies:
+            enemy = self.enemies[pos]
+            if enemy.name == "Typomancer":
+                self.current_enemy_pos = pos
+                self.start_typomancer_minigame(pos)
+                return True
+
+            # Instant kill check
+            if self.sword_acquired:
+                self.unlocked_encyclopedia_entries.add(enemy.name)
+                messagebox.showinfo("Sword Power!", f"You brandish your sword and instantly defeat the {enemy.name}!")
+                self.add_xp(enemy.xp_reward)
+                self.add_loot(enemy.loot)
+                del self.enemies[pos]
+                self.draw_map()
+                self.update_status()
+                return True
+
+            self.current_enemy_pos = pos
+            CombatMiniGameWindow(self, pos)
+            return True
+
+        # 2. Chests
+        if pos in self.chests:
+            return self.handle_chest(pos)
+
+        # 3. Tiles (Hazards/Obstacles)
+        if pos in self.tiles:
+            return self.handle_tile(pos)
+
+        # 4. NPCs
         if pos in self.npcs:
-            npc_type = self.npcs[pos]
-            self.unlocked_encyclopedia_entries.add(npc_type)
+            return self.handle_npc(pos)
 
-            if npc_type not in self.mastered_topics:
-                self.ask_question(self.npcs[pos])
+        return False
+
+    def handle_chest(self, pos):
+        chest_type = self.chests[pos]
+        self.unlocked_encyclopedia_entries.add(f"{chest_type.capitalize()} Chest")
+        required_key = "Silver Key" if chest_type == "silver" else "Gold Key"
+
+        if required_key in self.inventory:
+            self.inventory.remove(required_key)
+            del self.chests[pos]
+
+            if chest_type == "silver":
+                self.add_xp(5)
+                goo_amount = random.randint(1, 3)
+                for _ in range(goo_amount):
+                    self.add_loot("Slime Goo")
+                messagebox.showinfo("Success!",
+                                    f"You opened the silver chest and gained 5 XP and {goo_amount} Slime Goo!")
+            elif chest_type == "gold":
+                self.add_xp(10)
+                # Gold chest rewards a random item
+                reward = random.choice(["Sword", "Pickaxe"])
+                self.add_loot(reward)
+                messagebox.showinfo("Success!", f"You opened the gold chest and gained 10 XP and a {reward}!")
+
+            # We return False here so the player actually MOVES onto the chest tile after opening it?
+            # Original logic: moved player to new_x, new_y.
+            # My handle_interaction logic says "Returns True if the move should be blocked/handled completely"
+            # If I return False, player moves.
+            return False
+        else:
+            messagebox.showwarning("Locked!", f"This {chest_type} chest is locked! You need a {required_key}.")
+            return True # Block movement
+
+    def handle_tile(self, pos):
+        tile = self.tiles[pos]
+        self.unlocked_encyclopedia_entries.add(tile.capitalize())
+
+        if tile == "rock":
+            if "Pickaxe" in self.inventory:
+                if messagebox.askyesno("Clear Path", "Do you want to use your Pickaxe to clear this rock?"):
+                    del self.tiles[pos]
+                    messagebox.showinfo("Success!", "You cleared the rock and can now pass!")
+                    return False # Allow move
+                else:
+                    return True # Block
             else:
-                messagebox.showinfo("Already Completed", f"You've already completed: {self.npcs[pos]}")
+                messagebox.showinfo("Blocked!", "A rock blocks your path. You need a Pickaxe to clear it!")
+                return True
+
+        elif tile == "tree":
+            if "Goblin Axe" in self.inventory:
+                if messagebox.askyesno("Chop Tree", "Do you want to use your Goblin Axe to chop down this tree?"):
+                    del self.tiles[pos]
+                    messagebox.showinfo("Success!", "You chopped down the tree!")
+                    return False
+                else:
+                    return True
+            else:
+                messagebox.showinfo("Blocked!", "A tree blocks your path. You need a Goblin Axe to chop it down!")
+                return True
+
+        elif tile == "spikes":
+            if "Slipperoo!" in self.inventory:
+                messagebox.showinfo("Safe!", "Your Slipperoo! lets you slide safely over the spikes!")
+            else:
+                self.take_damage(10, "spikes")
+            return False # Allow move (onto spikes)
+
+        elif tile == "fire":
+            self.take_damage(20, "fire")
+            return False
+
+        return False
+
+    def handle_npc(self, pos):
+        npc_type = self.npcs[pos]
+        self.unlocked_encyclopedia_entries.add(npc_type)
+
+        if npc_type not in self.mastered_topics:
+            self.ask_question(self.npcs[pos])
+        else:
+            messagebox.showinfo("Already Completed", f"You've already completed: {self.npcs[pos]}")
+
+        # NPCs block movement usually, unless we want to walk through them?
+        # Original code just showed message and redrew map. Player did NOT move onto NPC tile.
+        # "self.player_pos = [new_x, new_y]" was OUTSIDE the "if pos in self.npcs" block in original code?
+        # Let's check original...
+        # Original:
+        # self.player_pos = [new_x, new_y]
+        # if pos in self.npcs: ...
+
+        # So original code allowed player to walk ON TOP of NPC.
+        return False
 
         self.draw_map()
 
@@ -2037,37 +1081,51 @@ class RPGGame:
 
         for pos, entity_type, data in movers:
             x, y = pos
-            dist = abs(x - player_x) + abs(y - player_y)
+            # Use A* or BFS for better pathfinding, but for now, simple smart chase
+            # Avoid getting stuck behind walls
 
-            if dist <= 2:
-                dx = player_x - x
-                dy = player_y - y
+            # Simple chase logic: try to reduce distance
+            path = self.find_path(pos, (player_x, player_y), occupied)
 
-                candidates = []
-                if abs(dx) >= abs(dy):
-                    candidates.append((x + (1 if dx > 0 else -1), y))
-                    candidates.append((x, y + (1 if dy > 0 else -1)))
-                else:
-                    candidates.append((x, y + (1 if dy > 0 else -1)))
-                    candidates.append((x + (1 if dx > 0 else -1), y))
+            if path and len(path) > 1:
+                next_step = path[1] # Path[0] is start
 
-                target = None
-                for cx, cy in candidates:
-                    if (cx, cy) == (player_x, player_y):
-                        events_to_trigger.append((entity_type, pos))
-                        target = None
-                        break
-
-                    if 0 <= cx < MAP_WIDTH and 0 <= cy < MAP_HEIGHT:
-                        if (cx, cy) not in occupied:
-                            target = (cx, cy)
-                            break
-
-                if target:
-                    moves_to_execute.append((pos, target, entity_type, data))
-                    occupied.add(target)
-                    if pos in occupied:
+                if next_step == (player_x, player_y):
+                     events_to_trigger.append((entity_type, pos))
+                elif next_step not in occupied:
+                     moves_to_execute.append((pos, next_step, entity_type, data))
+                     occupied.add(next_step)
+                     if pos in occupied:
                         occupied.remove(pos)
+
+    def find_path(self, start, goal, occupied):
+        """BFS Pathfinding to avoid obstacles."""
+        queue = [(start, [start])]
+        visited = set()
+        visited.add(start)
+
+        while queue:
+            (vertex, path) = queue.pop(0)
+
+            # Limit search depth for performance
+            if len(path) > 6:
+                continue
+
+            if vertex == goal:
+                return path
+
+            x, y = vertex
+            # Check adjacent cells
+            for dx, dy in [(0, 1), (0, -1), (1, 0), (-1, 0)]:
+                next_pos = (x + dx, y + dy)
+
+                if 0 <= next_pos[0] < MAP_WIDTH and 0 <= next_pos[1] < MAP_HEIGHT:
+                    # Can walk on: goal (player) or empty space not in occupied
+                    if next_pos == goal or next_pos not in occupied:
+                        if next_pos not in visited:
+                            visited.add(next_pos)
+                            queue.append((next_pos, path + [next_pos]))
+        return None
 
         if moves_to_execute:
             for old_pos, new_pos, entity_type, data in moves_to_execute:
@@ -2291,7 +1349,7 @@ if __name__ == "__main__":
     # Open the custom name selection window first
     # This class will handle its own creation, name input, and then
     # un-hide the root and start the RPGGame class.
-    app = NameSelectionWindow(root)
+    app = NameSelectionWindow(root, RPGGame)
 
     # Start the main application loop
     root.mainloop()
