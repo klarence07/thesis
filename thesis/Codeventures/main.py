@@ -2018,9 +2018,13 @@ class RPGGame:
                                    bg="#8B4513", fg="#00FFFF")
         self.typo_label.pack(pady=10)
 
-        self.word_display = tk.Label(self.main_frame, text=self.full_word_string, font=("Consolas", 14),
-                                     bg="#2B2B2B", fg="#33FF33", padx=10, pady=5)
+        self.word_display = tk.Text(self.main_frame, font=("Consolas", 14),
+                                    bg="#2B2B2B", fg="#33FF33", height=2, width=40, borderwidth=0)
         self.word_display.pack(pady=10)
+        self.word_display.tag_config("correct", foreground="#00FF00")  # Green for correct
+        self.word_display.tag_config("wrong", foreground="#FF0000")    # Red for error
+        self.word_display.insert("1.0", self.full_word_string)
+        self.word_display.config(state="disabled")
 
         self.input_entry = tk.Entry(self.main_frame, font=("Consolas", 14), width=30)
         self.input_entry.pack(pady=5)
@@ -2050,22 +2054,37 @@ class RPGGame:
         if self.game_state != "minigame" or not self.minigame_window.winfo_exists():
             return
         typed_text = self.input_entry.get()
-        if self.full_word_string.startswith(typed_text):
-            remaining_text = self.full_word_string[len(typed_text):]
-            self.word_display.config(text=remaining_text)
-            self.input_entry.config(fg="black")
 
+        # Update word display colors
+        self.word_display.config(state="normal")
+        self.word_display.tag_remove("correct", "1.0", "end")
+        self.word_display.tag_remove("wrong", "1.0", "end")
+
+        match_len = 0
+        min_len = min(len(typed_text), len(self.full_word_string))
+        for i in range(min_len):
+            if typed_text[i] == self.full_word_string[i]:
+                match_len += 1
+            else:
+                break
+
+        if match_len > 0:
+            self.word_display.tag_add("correct", "1.0", f"1.{match_len}")
+
+        if len(typed_text) > match_len:
+            # Highlight the error in the target text if within bounds
+            if match_len < len(self.full_word_string):
+                self.word_display.tag_add("wrong", f"1.{match_len}", f"1.{match_len + 1}")
+
+        self.word_display.config(state="disabled")
+
+        if self.full_word_string.startswith(typed_text):
+            self.input_entry.config(fg="black")
             if typed_text == self.full_word_string:
                 self.end_minigame()
                 return
-
         else:
             self.input_entry.config(fg="red")
-            match_len = 0
-            while match_len < len(typed_text) and self.full_word_string.startswith(typed_text[:match_len + 1]):
-                match_len += 1
-            remaining_text = self.full_word_string[match_len:]
-            self.word_display.config(text=remaining_text)
 
     def end_minigame(self):
         if not hasattr(self, 'minigame_window') or not self.minigame_window.winfo_exists():
