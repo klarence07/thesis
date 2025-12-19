@@ -226,10 +226,29 @@ class CombatMiniGameWindow:
 
         self.grid_size = 8
         self.cell_size = 50
-        self.player_local_pos = [0, 0]
-        self.enemy_local_pos = [7, 7]
+
+        # Randomize spawn positions
+        while True:
+            self.player_local_pos = [random.randint(0, self.grid_size - 1), random.randint(0, self.grid_size - 1)]
+            self.enemy_local_pos = [random.randint(0, self.grid_size - 1), random.randint(0, self.grid_size - 1)]
+
+            # Ensure safe distance (Manhattan distance > 3)
+            dist = abs(self.player_local_pos[0] - self.enemy_local_pos[0]) + abs(self.player_local_pos[1] - self.enemy_local_pos[1])
+            if dist > 3:
+                break
+
         self.player_dodges = 0
-        self.max_dodges = 3
+
+        # Randomize difficulty (max dodges required)
+        base_dodges = 3
+        if self.game.difficulty == "Easy":
+            self.max_dodges = random.randint(2, 3)
+        elif self.game.difficulty == "Hard":
+            self.max_dodges = random.randint(4, 6)
+        else:
+            self.max_dodges = random.randint(3, 4)
+
+        self.status_label.config(text=f"Dodges: 0/{self.max_dodges}")
 
         self.draw_minigame()
 
@@ -290,7 +309,16 @@ class CombatMiniGameWindow:
             if self.player_dodges >= self.max_dodges:
                 self.game_over_combat("win")
             else:
-                delay = 800 if self.enemy_data.name == "Goblin" else 500
+                # Randomize delay slightly to add unpredictability
+                base_delay = 800 if self.enemy_data.name == "Goblin" else 500
+                if self.game.difficulty == "Hard":
+                    base_delay -= 100
+                elif self.game.difficulty == "Easy":
+                    base_delay += 100
+
+                random_variance = random.randint(-100, 100)
+                delay = max(200, base_delay + random_variance)
+
                 self.game.root.after(delay, self.enemy_move_step)
 
     def game_over_combat(self, result):
