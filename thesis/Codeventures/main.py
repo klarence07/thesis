@@ -713,6 +713,15 @@ class InventoryWindow:
             return "POT", "#FF3366", "Restores 50 HP."
         return "???", "gray", "Unknown item."
 
+    def get_item_image(self, item_name):
+        if item_name == "Sword": return self.game.sword_img
+        elif item_name == "Pickaxe": return self.game.pickaxe_img
+        elif item_name == "Silver Key": return self.game.silver_key_img
+        elif item_name == "Gold Key": return self.game.gold_key_img
+        elif item_name == "Slime Goo": return self.game.slime_goo_img
+        elif item_name == "Goblin Axe": return self.game.goblin_axe_img
+        return None
+
     def display_inventory_grid(self):
         for widget in self.grid_frame.winfo_children():
             widget.destroy()
@@ -738,11 +747,18 @@ class InventoryWindow:
                     if count == 1 and item_name not in ["Silver Key", "Gold Key", "Slime Goo", "Potion"]:
                         btn_text = item_name.split()[0][:3].upper() if " " in item_name else item_name[:3].upper()
 
-                    btn = tk.Button(
-                        slot_container, text=btn_text, bg="#1C1C1C", fg=item_color, font=btn_font,
-                        width=5, height=2, compound="center",
-                        command=lambda name=item_name: self.show_item_actions(name)
-                    )
+                    img = self.get_item_image(item_name)
+                    if img:
+                        btn = tk.Button(
+                            slot_container, image=img, bg="#1C1C1C",
+                            command=lambda name=item_name: self.show_item_actions(name)
+                        )
+                    else:
+                        btn = tk.Button(
+                            slot_container, text=btn_text, bg="#1C1C1C", fg=item_color, font=btn_font,
+                            width=5, height=2, compound="center",
+                            command=lambda name=item_name: self.show_item_actions(name)
+                        )
                     btn.pack(padx=2, pady=2)
                     if count > 1 or "Key" in item_name or "Goo" in item_name:
                         tk.Label(btn, text=f"x{count}", bg="#1C1C1C", fg="#33FF33", font=("Consolas", 7, "bold")).place(relx=1.0, rely=1.0, anchor="se")
@@ -758,6 +774,10 @@ class InventoryWindow:
 
         _, item_color, item_desc = self.get_item_icon_config(item_name)
         count = self.item_counts[item_name]
+
+        img = self.get_item_image(item_name)
+        if img:
+            tk.Label(self.action_frame, image=img, bg="#8B4513").pack(pady=5)
 
         tk.Label(self.action_frame, text=f"Item: {item_name} (x{count})", font=("Consolas", 12, "bold"), bg="#8B4513", fg="#33FF33").pack(pady=5)
         tk.Label(self.action_frame, text=item_desc, font=("Consolas", 10), bg="#8B4513", fg="#00FFFF", wraplength=400).pack()
@@ -795,6 +815,42 @@ class InventoryWindow:
                 messagebox.showinfo("Full HP", "Your health is already full!")
         else:
             messagebox.showinfo("Tool", f"The {item_name} is used passively or on the map.")
+
+
+class LootDialog:
+    """Custom dialog to show loot with an image."""
+    def __init__(self, parent, title, message, item_image=None):
+        self.window = tk.Toplevel(parent)
+        self.window.title(title)
+        self.window.geometry("300x250")
+        self.window.configure(bg="#1C1C1C")
+        self.window.transient(parent)
+        self.window.grab_set()
+
+        # Center on screen
+        self.window.update_idletasks()
+        width = self.window.winfo_width()
+        height = self.window.winfo_height()
+        x = (self.window.winfo_screenwidth() // 2) - (width // 2)
+        y = (self.window.winfo_screenheight() // 2) - (height // 2)
+        self.window.geometry(f"+{x}+{y}")
+
+        self.main_frame = tk.Frame(
+            self.window,
+            bg="#8B4513",
+            padx=10, pady=10,
+            relief="ridge", borderwidth=4
+        )
+        self.main_frame.pack(fill="both", expand=True, padx=10, pady=10)
+
+        if item_image:
+            tk.Label(self.main_frame, image=item_image, bg="#8B4513").pack(pady=10)
+
+        tk.Label(self.main_frame, text=message, font=("Consolas", 12, "bold"), bg="#8B4513", fg="#33FF33", wraplength=250).pack(pady=10)
+
+        tk.Button(self.main_frame, text="OK", command=self.window.destroy, bg="#33CCFF", fg="#1C1C1C", font=("Consolas", 10, "bold"), width=10).pack(pady=10)
+
+        self.window.wait_window()
 
 
 class NameSelectionWindow:
@@ -1773,7 +1829,16 @@ class RPGGame:
         if item == "Pickaxe":
             self.pickaxe_acquired = True
         self.update_status()
-        messagebox.showinfo("Loot!", f"You received {item}!")
+
+        img = None
+        if item == "Sword": img = self.sword_img
+        elif item == "Pickaxe": img = self.pickaxe_img
+        elif item == "Silver Key": img = self.silver_key_img
+        elif item == "Gold Key": img = self.gold_key_img
+        elif item == "Slime Goo": img = self.slime_goo_img
+        elif item == "Goblin Axe": img = self.goblin_axe_img
+
+        LootDialog(self.root, "Loot!", f"You received {item}!", item_image=img)
 
     # --- Questions & loot ---
     def check_topic_complete(self, topic):
@@ -1854,9 +1919,7 @@ class RPGGame:
 
 
             loot_item = random.choice(self.get_loot_table())
-            self.inventory.append(loot_item)
-            messagebox.showinfo("Loot", f"You received: {loot_item}!")
-            self.unlocked_encyclopedia_entries.add(loot_item)
+            self.add_loot(loot_item)
 
             # --- FIX 1: Sound check ---
             if AUDIO_ENABLED:
