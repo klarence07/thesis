@@ -1858,10 +1858,17 @@ class RPGGame:
             self.add_xp(random.randint(4, 10))
             self.draw_map()
 
-            # Check if victory condition is met to spawn portal
-            if len(self.asked_sub_questions) >= self.victory_quota and not self.portal_pos:
-                 self.info_label.config(text="You've learned enough! Find the portal for final victory!")
-                 self.spawn_portal()
+            # Check if victory condition is met
+            if len(self.asked_sub_questions) >= self.victory_quota:
+                 messagebox.showinfo("Congratulations!", "You have answered the final question! Victory is yours!")
+                 if AUDIO_ENABLED:
+                    self.play_sound("victory.wav")
+
+                 # Save and Show Leaderboard
+                 time_taken = int(time.time() - self.start_time)
+                 db_utils.insert_score(self.player_name, self.xp, time_taken, self.difficulty)
+                 LeaderboardWindow(self)
+                 return
 
             # Also spawn portal if all NPCs for this level are gone (progression)
             elif not self.npcs and not self.portal_pos:
