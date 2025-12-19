@@ -288,16 +288,10 @@ def filter_keys_by_difficulty(keys_list, chosen_difficulty):
 
     # Logic:
     # Easy Mode -> Easy questions only
-    # Medium Mode -> Easy and Medium questions
-    # Hard Mode -> Easy, Medium, and Hard (All questions)
+    # Medium Mode -> Medium questions only
+    # Hard Mode -> Hard questions only
 
-    allowed_difficulties = []
-    if chosen_difficulty == "Easy":
-        allowed_difficulties = ["Easy"]
-    elif chosen_difficulty == "Medium":
-        allowed_difficulties = ["Easy", "Medium"]
-    else: # Hard
-        allowed_difficulties = ["Easy", "Medium", "Hard"]
+    allowed_difficulties = [chosen_difficulty]
 
     placeholders = ','.join('?' for _ in keys_list)
     diff_placeholders = ','.join('?' for _ in allowed_difficulties)
@@ -315,11 +309,6 @@ def filter_keys_by_difficulty(keys_list, chosen_difficulty):
     conn.close()
 
     filtered_keys = [row['key'] for row in rows]
-
-    # If the filtered list is empty (e.g. strict filtering left no options),
-    # fallback to returning the original list to avoid soft-lock.
-    if not filtered_keys:
-        return keys_list
 
     return filtered_keys
 
