@@ -321,8 +321,9 @@ class EncycodepediaWindow:
         self.game = game
         self.window = tk.Toplevel(game.root)
         self.window.title("Encycodepedia")
-        self.window.geometry("400x500")
+        self.window.geometry("500x600")
         self.window.configure(bg="#1C1C1C")
+        self.window.resizable(True, True)
 
         self.all_entries = {
             "Enemies": ["Slime", "Goblin", "Typomancer"],
@@ -415,8 +416,9 @@ class StatsSystem:
         self.game = game
         self.window = tk.Toplevel(game.root)
         self.window.title("Upgrade Stats")
-        self.window.geometry("350x240")
+        self.window.geometry("450x300")
         self.window.configure(bg="#1C1C1C")
+        self.window.resizable(True, True)
 
         # --- UI: Tree Wrapper ---
         self.main_frame = tk.Frame(
@@ -483,8 +485,9 @@ class CraftingWindow:
         self.game = game
         self.window = tk.Toplevel(game.root)
         self.window.title("Crafting")
-        self.window.geometry("400x200")
+        self.window.geometry("500x300")
         self.window.configure(bg="#1C1C1C")
+        self.window.resizable(True, True)
 
         # --- UI: Tree Wrapper ---
         self.main_frame = tk.Frame(
@@ -564,8 +567,9 @@ class LeaderboardWindow:
         self.game.game_state = "menu"
         self.window = tk.Toplevel(game.root)
         self.window.title("Leaderboard")
-        self.window.geometry("500x400")
+        self.window.geometry("600x500")
         self.window.configure(bg="#1C1C1C")
+        self.window.resizable(True, True)
         self.window.protocol("WM_DELETE_WINDOW", self.on_close)
 
         # --- UI: Wrapper ---
@@ -663,9 +667,9 @@ class InventoryWindow:
         self.game = game
         self.window = tk.Toplevel(game.root)
         self.window.title("Inventory")
-        self.window.geometry("450x450")
+        self.window.geometry("600x600")
         self.window.configure(bg="#1C1C1C")
-        self.window.resizable(False, False)
+        self.window.resizable(True, True)
 
         # --- UI: Tree Wrapper ---
         self.main_frame = tk.Frame(
@@ -804,9 +808,9 @@ class NameSelectionWindow:
         # self.master.withdraw() # We withdraw in __main__
         self.window = tk.Toplevel(master)
         self.window.title("Character Creation")
-        self.window.geometry("380x300")
+        self.window.geometry("500x450")
         self.window.configure(bg="#1C1C1C")
-        self.window.resizable(False, False)
+        self.window.resizable(True, True)
 
         self.window.protocol("WM_DELETE_WINDOW", self.on_close)
         self.window.grab_set()
