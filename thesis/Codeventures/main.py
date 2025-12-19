@@ -1860,6 +1860,7 @@ class RPGGame:
 
             # Check if victory condition is met to spawn portal
             if len(self.asked_sub_questions) >= self.victory_quota and not self.portal_pos:
+                 self.npcs.clear()
                  self.info_label.config(text="You've learned enough! Find the portal for final victory!")
                  self.spawn_portal()
 
