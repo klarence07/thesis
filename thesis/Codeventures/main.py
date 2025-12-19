@@ -2016,7 +2016,7 @@ class RPGGame:
     def check_chase(self):
         if self.game_state == "exploration":
             self.move_entities_towards_player()
-        self.root.after(800, self.check_chase)
+        self.root.after(2000, self.check_chase)
 
     def move_entities_towards_player(self):
         player_x, player_y = self.player_pos
