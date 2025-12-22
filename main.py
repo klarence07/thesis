@@ -557,6 +557,41 @@ class CraftingWindow:
             self.craft_btn.config(state="disabled")
 
 
+class AboutUsWindow:
+    def __init__(self, master):
+        self.window = tk.Toplevel(master)
+        self.window.title("About Us")
+        self.window.geometry("400x350")
+        self.window.configure(bg="#1C1C1C")
+        self.window.attributes('-topmost', True)
+
+        # --- UI: Wrapper ---
+        self.main_frame = tk.Frame(
+            self.window,
+            bg="#8B4513",
+            padx=10, pady=10,
+            relief="ridge", borderwidth=4
+        )
+        self.main_frame.pack(fill="both", expand=True, padx=10, pady=10)
+
+        tk.Label(self.main_frame, text="About Codeventures", font=("Consolas", 16, "bold"), bg="#8B4513", fg="#33FF33").pack(pady=10)
+
+        about_text = (
+            "Welcome to Codeventures!\n\n"
+            "An educational RPG journey designed\n"
+            "to master Python programming.\n\n"
+            "Developed by the Codeventures Team.\n\n"
+            "Credits:\n"
+            "- Game Design\n"
+            "- Programming\n"
+            "- Art & Assets"
+        )
+
+        tk.Label(self.main_frame, text=about_text, font=("Consolas", 12), bg="#8B4513", fg="#FFFFFF", justify="center").pack(pady=10)
+
+        tk.Button(self.main_frame, text="Close", command=self.window.destroy, bg="#FF3366", fg="#1C1C1C", font=("Consolas", 12, "bold")).pack(pady=20)
+
+
 class LeaderboardWindow:
     def __init__(self, game):
         self.game = game
@@ -599,12 +634,18 @@ class LeaderboardWindow:
 
         self.load_leaderboard()
 
+        self.about_btn = tk.Button(self.main_frame, text="About Us", command=self.open_about_us, bg="#33CCFF", fg="#1C1C1C", font=("Consolas", 10, "bold"))
+        self.about_btn.pack(pady=5)
+
         self.close_btn = tk.Button(self.main_frame, text="Close Game", command=self.window.destroy, bg="#FF3366", fg="#1C1C1C", font=("Consolas", 12, "bold"))
         self.close_btn.pack(pady=10)
         self.close_btn.config(command=self.close_and_quit)
 
         self.reset_btn = tk.Button(self.main_frame, text="Reset Leaderboard", command=self.reset_leaderboard, bg="#FFD700", fg="#1C1C1C", font=("Consolas", 10, "bold"))
         self.reset_btn.pack(pady=5)
+
+    def open_about_us(self):
+        AboutUsWindow(self.window)
 
     def reset_leaderboard(self):
         username = simpledialog.askstring("Admin Login", "Enter Admin Username:")
