@@ -19,6 +19,23 @@ except ImportError:
 ADMIN_USERNAME = "admin"
 ADMIN_PASSWORD = "admin123"
 
+def center_window(window, width=None, height=None):
+    """Centers the window on the screen with the specified or current dimensions."""
+    window.update_idletasks()
+
+    if width is None:
+        width = window.winfo_width()
+    if height is None:
+        height = window.winfo_height()
+
+    screen_width = window.winfo_screenwidth()
+    screen_height = window.winfo_screenheight()
+
+    x = (screen_width - width) // 2
+    y = (screen_height - height) // 2
+
+    window.geometry(f'{width}x{height}+{x}+{y}')
+
 TILE_SIZE = 50
 MAP_WIDTH = 15
 MAP_HEIGHT = 12
@@ -204,7 +221,8 @@ class CombatMiniGameWindow:
 
         self.window = tk.Toplevel(self.game.root)
         self.window.title(f"Combat: {self.enemy_data.name}")
-        self.window.geometry("450x500")
+        center_window(self.window, 450, 500)
+        self.window.resizable(False, False)
         self.window.configure(bg="#1C1C1C")
         # Prevent closing via X to ensure combat is resolved
         self.window.protocol("WM_DELETE_WINDOW", lambda: None)
@@ -321,7 +339,8 @@ class EncycodepediaWindow:
         self.game = game
         self.window = tk.Toplevel(game.root)
         self.window.title("Encycodepedia")
-        self.window.geometry("400x500")
+        center_window(self.window, 400, 500)
+        self.window.resizable(False, False)
         self.window.configure(bg="#1C1C1C")
 
         self.all_entries = {
@@ -415,7 +434,8 @@ class StatsSystem:
         self.game = game
         self.window = tk.Toplevel(game.root)
         self.window.title("Upgrade Stats")
-        self.window.geometry("350x240")
+        center_window(self.window, 350, 240)
+        self.window.resizable(False, False)
         self.window.configure(bg="#1C1C1C")
 
         # --- UI: Tree Wrapper ---
@@ -483,7 +503,8 @@ class CraftingWindow:
         self.game = game
         self.window = tk.Toplevel(game.root)
         self.window.title("Crafting")
-        self.window.geometry("400x200")
+        center_window(self.window, 400, 200)
+        self.window.resizable(False, False)
         self.window.configure(bg="#1C1C1C")
 
         # --- UI: Tree Wrapper ---
@@ -564,7 +585,8 @@ class LeaderboardWindow:
         self.game.game_state = "menu"
         self.window = tk.Toplevel(game.root)
         self.window.title("Leaderboard")
-        self.window.geometry("500x400")
+        center_window(self.window, 500, 400)
+        self.window.resizable(False, False)
         self.window.configure(bg="#1C1C1C")
         self.window.protocol("WM_DELETE_WINDOW", self.on_close)
 
@@ -663,7 +685,7 @@ class InventoryWindow:
         self.game = game
         self.window = tk.Toplevel(game.root)
         self.window.title("Inventory")
-        self.window.geometry("450x550")
+        center_window(self.window, 450, 550)
         self.window.configure(bg="#1C1C1C")
         self.window.resizable(False, False)
 
@@ -858,7 +880,7 @@ class NameSelectionWindow:
         # self.master.withdraw() # We withdraw in __main__
         self.window = tk.Toplevel(master)
         self.window.title("Character Creation")
-        self.window.geometry("380x300")
+        center_window(self.window, 380, 300)
         self.window.configure(bg="#1C1C1C")
         self.window.resizable(False, False)
 
@@ -1195,6 +1217,9 @@ class RPGGame:
 
         if AUDIO_ENABLED:
             self.play_background_music()
+
+        center_window(self.root)
+        self.root.resizable(False, False)
 
     # --- Sound and Music ---
     def play_sound(self, sound_file):
@@ -2152,7 +2177,8 @@ class RPGGame:
 
         self.minigame_window = tk.Toplevel(self.root)
         self.minigame_window.title("Typomancer Challenge")
-        self.minigame_window.geometry("450x250")
+        center_window(self.minigame_window, 450, 250)
+        self.minigame_window.resizable(False, False)
         self.minigame_window.configure(bg="#1C1C1C")
         self.minigame_window.protocol("WM_DELETE_WINDOW", self.end_minigame)
         self.minigame_window.attributes('-topmost', True)
